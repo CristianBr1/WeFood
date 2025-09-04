@@ -1,0 +1,159 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 1000px;
+  height: 500px;
+  padding: 20px 20px 0 20px; 
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+  max-height: 90vh;
+  position: relative;
+}
+
+.modal-header {
+  font-size: 1.5rem;
+  font-weight: bold;
+  top: 0;
+  margin-top: 0;
+  position: sticky;
+  width: 96%; 
+  background: white;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  overflow: hidden; 
+}
+
+.product-info {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  text-align: center;
+  justify-items: center;
+}
+
+.extra-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+textarea {
+  resize: none;
+  padding: 10px;
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  width: 100%; 
+  background: white;
+  padding: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  text-align: center;
+}
+
+.modal-contents {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 150px); 
+  overflow: hidden; 
+}
+
+/* Imagem do produto */
+.product-image {
+  flex: 0 0 450px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+}
+
+.product-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 11px;
+  cursor: pointer;
+  padding: 4px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+@media (max-width: 730px) {
+  .modal-contents {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: auto;
+    overflow: visible; 
+  }
+  .product-image {
+    flex: none; 
+    position: static; 
+    top: auto;
+    align-self: auto;
+  }
+  .product-image img {
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+  }
+  .modal {
+    min-height: 100%;
+  }
+  .modal {
+    justify-content: space-between;
+    padding: 0 20px 0 20px;
+  }
+  .modal-footer {
+    justify-content: space-evenly;
+  }
+
+  .close-button {
+    margin: 0;
+    top: 0;
+    left: 0;
+    margin-left: 5px;
+    margin-top: 0;
+    cursor: pointer;
+    position: fixed;
+    background: white;
+    display: flex;
+    justify-content: start;
+    border-radius: 0;
+  }
+}

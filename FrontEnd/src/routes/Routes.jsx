@@ -5,7 +5,8 @@ import Home from "../pages/Home";
 
 const Router = () => (
   <Routes>
-    <Route path="/" exact={true} element={<Home />} />
+    <Route path="/" element={<Home />} />
+      <Route path="/product/:id" element={<Home />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
   </Routes>
