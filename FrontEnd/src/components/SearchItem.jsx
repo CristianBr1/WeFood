@@ -19,7 +19,7 @@ const SearchItem = () => {
           width: "100%",
           padding: "0.4rem 2.2rem 0.4rem 1rem",
           borderRadius: "5px",
-          background: darkMode ? "#222" : "#f2f2f2",
+          background: darkMode ? "#222" : "#fff",
           color: darkMode ? "#fff" : "#222",
           fontSize: "1rem",
           fontFamily: "inherit",
