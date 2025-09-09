@@ -7,6 +7,7 @@ import "../styles/HomeCategory.css";
 import categories from "../services/categories";
 import productsByCategory from "../services/productsByCategory";
 import ProductModal from "./ProductModal";
+import SearchItem from "./SearchItem";
 
 const HomeCategory = () => {
   const { darkMode } = useContext(ThemeContext);
@@ -83,6 +84,12 @@ const HomeCategory = () => {
           </button>
         ))}
       </div>
+      <div
+  className="flex justify-center w-full my-6"
+  style={{ maxWidth: "600px", margin: "1.5rem auto" }}
+>
+  <SearchItem />
+</div>
 
       {/* Lista de produtos */}
       <div
