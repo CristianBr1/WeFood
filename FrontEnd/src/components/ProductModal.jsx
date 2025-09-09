@@ -141,6 +141,7 @@ const ProductModal = ({ product, onClose }) => {
               {/* Observações */}
               <h4>Observações</h4>
               <textarea
+                className="outline-none"
                 placeholder="Alguma observação sobre o pedido?"
                 value={observations}
                 onChange={(e) => setObservations(e.target.value)}
