@@ -147,16 +147,6 @@ const productsByCategory = {
   ],
   Sobremesa: [
     {
-      id: "c1",
-      name: "Combo Família",
-      price: 80.0,
-      image:
-        "https://images.unsplash.com/photo-1556911220-e15b29be8c79?auto=format&fit=crop&w=400&q=80",
-      description: "Hamburguer clássico com queijo, alface e tomate.",
-    },
-  ],
-  Extras: [
-    {
       id: "s1",
       name: "Pudim",
       price: 12.0,
@@ -167,6 +157,24 @@ const productsByCategory = {
     {
       id: "s2",
       name: "Brownie",
+      price: 15.0,
+      image:
+        "https://images.unsplash.com/photo-1604908177522-8aa8f3956b27?auto=format&fit=crop&w=400&q=80",
+      description: "Hamburguer clássico com queijo, alface e tomate.",
+    },
+  ],
+    Extras: [
+    {
+      id: "e1",
+      name: "maionese",
+      price: 12.0,
+      image:
+        "https://images.unsplash.com/photo-1579889678911-ec6baf6215f7?auto=format&fit=crop&w=400&q=80",
+      description: "Hamburguer clássico com queijo, alface e tomate.",
+    },
+    {
+      id: "e2",
+      name: "molho da casa",
       price: 15.0,
       image:
         "https://images.unsplash.com/photo-1604908177522-8aa8f3956b27?auto=format&fit=crop&w=400&q=80",
