@@ -1,0 +1,209 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    background: inherit;
+    color: inherit;
+}
+.navbar-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+    margin: 0;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.navbar-links li a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Links Navbar Centralizada */
+.navbar-links-centered {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    gap: 1.5rem;
+    justify-content: center;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    height: 100%;
+}
+
+/* Menu Dropdown */
+.navbar-dropdown-menu {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 220px;
+    height: calc(100vh - 60px);
+    padding: 1rem 0.5rem;
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.navbar-user-label {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    text-align: left;
+}
+
+.navbar-links-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-dropdown-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.navbar-dropdown-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.navbar-dropdown-logout {
+    margin-top: auto;
+}
+@media (min-width: 1224px) {
+    .navbar-links-dropdown {
+        display: none !important;
+    }
+}
+@media (max-width: 1224px) {
+    .navbar-links {
+        display: none !important;
+    }
+    .navbar-links-dropdown {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0;
+    }
+    .navbar-links-dropdown li {
+        width: 100%;
+        text-align: center;
+        margin: 0.5rem 0;
+    }
+    .navbar-links-dropdown a {
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+    }
+}
+/* Menu Hamburger */
+.navbar-hamburger {
+    display: block;
+    background: none;
+    border: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    z-index: 1002;
+}
+.hamburger-lines {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 24px;
+    position: relative;
+}
+.line {
+    display: block;
+    height: 4px;
+    width: 100%;
+    background: currentColor;
+    border-radius: 2px;
+    margin: 3px 0;
+    transition: all 0.3s ease;
+}
+.navbar-hamburger.open .line1 {
+    transform: translateY(8px) rotate(45deg);
+    transform-origin: center;
+}
+.navbar-hamburger.open .line2 {
+    opacity: 0;
+}
+.navbar-hamburger.open .line3 {
+    transform: translateY(-8px) rotate(-45deg);
+    transform-origin: center;
+}
+
+/* Slide-in menu mobile */
+@media (max-width: 768px) {
+    .navbar-links {
+        display: none !important;
+    }
+    .navbar-links.open {
+        display: flex !important;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 70vw;
+        max-width: 320px;
+        height: 100vh;
+        background: var(--navbar-bg, #fff);
+        box-shadow: 2px 0 16px 0 rgba(0,0,0,0.18);
+        z-index: 1000;
+        padding-top: 80px;
+        animation: slideInMenu 0.3s ease;
+    }
+    .navbar-logo {
+        z-index: 1001;
+        font-size: 1.1rem !important;
+        position: absolute;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0;
+    }
+    .navbar > div > div[style*="width: 180px"] {
+        position: absolute !important;
+        left: 40% !important;
+        right: auto !important;
+        top: 50%;
+        transform: translate(-50%, -50%) !important;
+        margin-left: 0 !important;
+        width: 50vw !important;
+        max-width: 200px !important;
+        min-width: 120px !important;
+        z-index: 1003 !important;
+    }
+}

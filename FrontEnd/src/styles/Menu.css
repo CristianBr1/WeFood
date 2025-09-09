@@ -1,0 +1,81 @@
+.menu-container {
+	position: relative;
+	overflow: hidden;
+	margin-top: 50px;
+    min-height: 100vh;
+    height: auto;
+}
+
+.menu-container h1 {
+	position: relative;
+    font-size: 2em;
+    font-weight: bold;
+	z-index: 2;
+}
+
+.menu-container h2 {
+	position: relative;
+    font-size: 1.2em;
+    font-weight: 600;
+	z-index: 2;
+}
+
+.menu-container .menu-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    justify-items: center; 
+    align-items: start;
+    text-align: justify;
+    width: 60%;
+    margin: 1rem auto;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    max-width: 900px;
+    min-width: 360px;
+}
+
+.menu-container .menu-settings .setting-block {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    justify-content: flex-start;
+    margin: 0 1rem;
+}
+.menu-container .menu-settings button {
+    display: flex;
+    align-items: center;
+    outline: none;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    margin: 1rem 1.5rem 1rem 1rem;
+    text-align: left;
+    height: 60px;
+    width: 180px !important;
+    font-family: inherit;
+    cursor: pointer;
+}
+.menu-container .menu-settings button:hover {
+    filter: brightness(0.9);
+}
+.menu-container .menu-settings button span {
+    margin-right: 0.5em;
+    font-size: 1.2em;
+}
+.setting-block p {
+    margin: 0;
+}
+
+@media (max-width: 1124px) {
+    .menu-container > div:first-child {
+        margin-left: 1rem !important;
+        padding: 1rem !important;
+    }
+
+    .menu-container .menu-settings {
+        margin-bottom: 6rem !important;
+    }
+}
