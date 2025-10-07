@@ -57,8 +57,10 @@
     width: 180px !important;
     font-family: inherit;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 .menu-container .menu-settings button:hover {
+    transform: translateY(-4px);
     filter: brightness(0.9);
 }
 .menu-container .menu-settings button span {
