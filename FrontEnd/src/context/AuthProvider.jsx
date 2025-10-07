@@ -14,19 +14,30 @@ const AuthProvider = ({ children }) => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
+  const addToCart = (product) => {
+    const itemData = {
+      ...product,
+      cartItemId: uuidv4(),
+      originalExtras: product.originalExtras || product.extras || [],
+    };
 
-  const addToCart = (item) => {
-    const cartItem = { ...item, cartItemId: uuidv4() };
-    setCart((prev) => [...prev, cartItem]);
+    setCart((prev) => [...prev, itemData]);
   };
-
 
   const updateCartItem = (updatedItem) => {
     setCart((prev) =>
-      prev.map((p) => (p.cartItemId === updatedItem.cartItemId ? updatedItem : p))
+      prev.map((item) =>
+        item.cartItemId === updatedItem.cartItemId
+          ? {
+              ...item,
+              ...updatedItem,
+              originalExtras:
+                item.originalExtras || updatedItem.originalExtras || [],
+            }
+          : item
+      )
     );
   };
-
 
   const incrementQuantity = (item) => {
     setCart((prev) =>
@@ -41,7 +52,6 @@ const AuthProvider = ({ children }) => {
       )
     );
   };
-
 
   const decrementQuantity = (item) => {
     setCart((prev) =>
@@ -59,6 +69,9 @@ const AuthProvider = ({ children }) => {
     );
   };
 
+  const removeFromCart = (item) => {
+    setCart((prev) => prev.filter((i) => i.cartItemId !== item.cartItemId));
+  };
 
   const clearCart = () => {
     setCart([]);
@@ -76,6 +89,7 @@ const AuthProvider = ({ children }) => {
         clearCart,
         searchItem,
         setSearchItem,
+        removeFromCart,
       }}
     >
       {children}
