@@ -4,17 +4,21 @@ import CloseIcon from "@mui/icons-material/Close";
 import { ThemeContext } from "../context/ThemeProvider";
 import "../styles/ProductModal.css";
 
-const ProductModal = ({ product, onClose, isEdit }) => {
+const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) => {
   if (!product) return null;
 
   const { darkMode } = useContext(ThemeContext);
   const { addToCart, updateCartItem } = useContext(AuthContext);
 
-  const [selectedExtras, setSelectedExtras] = useState([]);
-  const [meatCount, setMeatCount] = useState(product.meatOptions?.min || 1);
-  const [productQuantity, setProductQuantity] = useState(1);
-  const [observations, setObservations] = useState("");
+  // Inicializa selectedExtras dependendo se estamos no Carrinho ou Home
+  const [selectedExtras, setSelectedExtras] = useState(
+    showOriginalExtras ? product.extras || [] : []
+  );
+  const [meatCount, setMeatCount] = useState(product.meatCount || product.meatOptions?.min || 1);
+  const [productQuantity, setProductQuantity] = useState(product.quantity || 1);
+  const [observations, setObservations] = useState(product.observations || "");
 
+  // Atualiza estado se for edição
   useEffect(() => {
     if (isEdit) {
       setSelectedExtras(product.extras || []);
@@ -30,8 +34,9 @@ const ProductModal = ({ product, onClose, isEdit }) => {
     );
   };
 
+  const extrasToShow = showOriginalExtras ? product.originalExtras || [] : product.extras || [];
   const extrasTotal = selectedExtras.reduce((sum, extra) => sum + extra.price, 0);
-  const meatExtraPrice = (meatCount - 1) * 5;
+  const meatExtraPrice = (meatCount - 1) * (product.meatOptions?.pricePerExtra || 5);
   const totalPrice = (product.price + extrasTotal + meatExtraPrice) * productQuantity;
 
   const handleAddOrUpdate = () => {
@@ -42,6 +47,7 @@ const ProductModal = ({ product, onClose, isEdit }) => {
       quantity: productQuantity,
       observations,
       totalPrice,
+      originalExtras: product.originalExtras || product.extras || [],
     };
 
     if (isEdit) {
@@ -72,7 +78,6 @@ const ProductModal = ({ product, onClose, isEdit }) => {
           boxShadow: darkMode ? "none" : "0 2px 16px 0 rgba(0,0,0,0.18)",
         }}
       >
-        {/* Botão fechar */}
         <button
           className="close-button"
           onClick={onClose}
@@ -81,7 +86,6 @@ const ProductModal = ({ product, onClose, isEdit }) => {
           <CloseIcon className="text-red-600" />
         </button>
 
-        {/* Conteúdo do produto */}
         <div className="modal-contents" style={{ color: darkMode ? "#fff" : "#222" }}>
           <div className="product-image">
             <img src={product.image} alt={product.name} />
@@ -95,12 +99,15 @@ const ProductModal = ({ product, onClose, isEdit }) => {
             <div className="modal-body">
               <p>{product.description}</p>
 
-              {/* Extras */}
-              {product.extras?.length > 0 && (
+              {extrasToShow.length > 0 && (
                 <div>
                   <h4>Extras</h4>
-                  {product.extras.map((extra, index) => (
-                    <label key={index} className="extra-option pl-5" style={{ color: darkMode ? "#fff" : "#222" }}>
+                  {extrasToShow.map((extra, index) => (
+                    <label
+                      key={index}
+                      className="extra-option pl-5"
+                      style={{ color: darkMode ? "#fff" : "#222" }}
+                    >
                       <input
                         type="checkbox"
                         checked={selectedExtras.includes(extra)}
@@ -112,13 +119,28 @@ const ProductModal = ({ product, onClose, isEdit }) => {
                 </div>
               )}
 
-              {/* Carnes */}
               {product.meatOptions && (
                 <div className="meat-selector" style={{ color: darkMode ? "#fff" : "#222" }}>
                   <h4>Quantidade de carnes</h4>
-                  <button onClick={() => setMeatCount(prev => Math.max(product.meatOptions.min, prev - 1))}>-</button>
+                  <button
+                    onClick={() =>
+                      setMeatCount((prev) =>
+                        Math.max(product.meatOptions.min, prev - 1)
+                      )
+                    }
+                  >
+                    -
+                  </button>
                   <span>{meatCount}</span>
-                  <button onClick={() => setMeatCount(prev => Math.min(product.meatOptions.max, prev + 1))}>+</button>
+                  <button
+                    onClick={() =>
+                      setMeatCount((prev) =>
+                        Math.min(product.meatOptions.max, prev + 1)
+                      )
+                    }
+                  >
+                    +
+                  </button>
                   {meatCount > 1 && (
                     <p className="extra-meat-price">
                       + R$ {(product.meatOptions.pricePerExtra * (meatCount - 1)).toFixed(2)}
@@ -127,7 +149,6 @@ const ProductModal = ({ product, onClose, isEdit }) => {
                 </div>
               )}
 
-              {/* Observações */}
               <h4>Observações</h4>
               <textarea
                 className="outline-none"
@@ -148,7 +169,6 @@ const ProductModal = ({ product, onClose, isEdit }) => {
           </div>
         </div>
 
-        {/* Rodapé com quantidade e adicionar ao carrinho */}
         <div
           className="modal-footer flex items-center justify-between"
           style={{
@@ -158,7 +178,7 @@ const ProductModal = ({ product, onClose, isEdit }) => {
         >
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setProductQuantity(prev => Math.max(1, prev - 1))}
+              onClick={() => setProductQuantity((prev) => Math.max(1, prev - 1))}
               style={{
                 background: "transparent",
                 color: darkMode ? "#fff" : "#222",
@@ -169,7 +189,7 @@ const ProductModal = ({ product, onClose, isEdit }) => {
             </button>
             <span>{productQuantity}</span>
             <button
-              onClick={() => setProductQuantity(prev => prev + 1)}
+              onClick={() => setProductQuantity((prev) => prev + 1)}
               style={{
                 background: "transparent",
                 color: darkMode ? "#fff" : "#222",
@@ -188,7 +208,9 @@ const ProductModal = ({ product, onClose, isEdit }) => {
               color: "#fff",
             }}
           >
-            {isEdit ? "Atualizar Pedido" : `Adicionar ao carrinho - R$ ${totalPrice.toFixed(2)}`}
+            {isEdit
+              ? "Atualizar Pedido"
+              : `Adicionar ao carrinho - R$ ${totalPrice.toFixed(2)}`}
           </button>
         </div>
       </div>
