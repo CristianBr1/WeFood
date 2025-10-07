@@ -1,24 +1,85 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AuthContext from "./AuthContext";
+import { v4 as uuidv4 } from "uuid";
 
 const AuthProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    const stored = localStorage.getItem("cart");
+    return stored ? JSON.parse(stored) : [];
+  });
+
   const [searchItem, setSearchItem] = useState("");
 
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
+
   const addToCart = (item) => {
-    setCart((prev) => [...prev, item]);
+    const cartItem = { ...item, cartItemId: uuidv4() };
+    setCart((prev) => [...prev, cartItem]);
   };
 
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((p) => p.id !== id));
+
+  const updateCartItem = (updatedItem) => {
+    setCart((prev) =>
+      prev.map((p) => (p.cartItemId === updatedItem.cartItemId ? updatedItem : p))
+    );
   };
 
-  const clearCart = () => setCart([]);
 
-  const allStates = { cart, addToCart, removeFromCart, clearCart, searchItem, setSearchItem };
+  const incrementQuantity = (item) => {
+    setCart((prev) =>
+      prev.map((p) =>
+        p.cartItemId === item.cartItemId
+          ? {
+              ...p,
+              quantity: p.quantity + 1,
+              totalPrice: (p.totalPrice / p.quantity) * (p.quantity + 1),
+            }
+          : p
+      )
+    );
+  };
+
+
+  const decrementQuantity = (item) => {
+    setCart((prev) =>
+      prev
+        .map((p) =>
+          p.cartItemId === item.cartItemId
+            ? {
+                ...p,
+                quantity: p.quantity - 1,
+                totalPrice: (p.totalPrice / p.quantity) * (p.quantity - 1),
+              }
+            : p
+        )
+        .filter((p) => p.quantity > 0)
+    );
+  };
+
+
+  const clearCart = () => {
+    setCart([]);
+    localStorage.removeItem("cart");
+  };
 
   return (
-    <AuthContext.Provider value={allStates}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        cart,
+        addToCart,
+        updateCartItem,
+        incrementQuantity,
+        decrementQuantity,
+        clearCart,
+        searchItem,
+        setSearchItem,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 };
 

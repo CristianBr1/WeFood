@@ -3,6 +3,7 @@ import Register from "../pages/Register";
 import Login from "../pages/Login";
 import Home from "../pages/Home";
 import Menu from "../pages/Menu";
+import Cart from "../pages/Cart";
 
 const Router = () => (
   <Routes>
@@ -10,6 +11,7 @@ const Router = () => (
       <Route path="/product/:id" element={<Home />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
+     <Route path="/cart" element={<Cart />} />
     <Route path="/menu" element={<Menu />} /> {/* usuário deve ter uma conta para acessar o menu, por id? */}
   </Routes>
 );
