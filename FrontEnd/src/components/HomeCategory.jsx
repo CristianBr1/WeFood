@@ -34,7 +34,9 @@ const HomeCategory = () => {
       : allProducts.filter(
           (product) =>
             product.name.toLowerCase().includes(searchItem.toLowerCase()) ||
-            product.description.toLowerCase().includes(searchItem.toLowerCase()) ||
+            product.description
+              .toLowerCase()
+              .includes(searchItem.toLowerCase()) ||
             product.category.toLowerCase().includes(searchItem.toLowerCase())
         );
 
@@ -47,72 +49,78 @@ const HomeCategory = () => {
       }}
     >
       {/* Categorias em Swiper */}
-<div
-  className="home-cat-slider"
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    maxWidth: "1200px",
-    margin: "1.5rem auto", 
-    width: "100%",
-  }}
->
-  <Swiper
-    spaceBetween={10}
-    slidesPerView={2}
-    breakpoints={{
-      320: { slidesPerView: 1 },
-      420: { slidesPerView: 2 },
-      640: { slidesPerView: 3 },
-      900: { slidesPerView: 4 },
-      1200: { slidesPerView: 5 },
-    }}
-    freeMode
-    mousewheel={{ forceToAxis: true }}
-    grabCursor
-    loop
-    autoplay={{ delay: 1500, disableOnInteraction: false }}
-    speed={2000}
-    modules={[FreeMode, Mousewheel, Autoplay, Navigation]}
-    style={{ width: "100%" }} 
-  >
-    {categories.map((cat) => (
-      <SwiperSlide key={cat.id}>
-        <button
-          type="button"
-          className="cat-card"
-          aria-label={cat.title}
-          onClick={() => {
-            setSelectedCategory(cat.title);
-            setSearchItem("");
+      <div
+        className="home-cat-slider"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          maxWidth: "1200px",
+          margin: "1.5rem auto",
+          width: "100%",
+        }}
+      >
+        <Swiper
+          spaceBetween={10}
+          slidesPerView={2}
+          breakpoints={{
+            320: { slidesPerView: 1 },
+            420: { slidesPerView: 2 },
+            640: { slidesPerView: 3 },
+            900: { slidesPerView: 4 },
+            1200: { slidesPerView: 5 },
           }}
-          style={{
-            background:
-              selectedCategory === cat.title
-                ? darkMode
-                  ? "#333"
-                  : "#f8f8f8"
-                : darkMode
-                ? "#222"
-                : "#fff",
-            color: darkMode ? "#fff" : "#222",
-            border: darkMode ? "1px solid #444" : "1px solid #eee",
-          }}
+          freeMode
+          mousewheel={{ forceToAxis: true }}
+          grabCursor
+          loop
+          autoplay={{ delay: 1500, disableOnInteraction: false }}
+          speed={2000}
+          modules={[FreeMode, Mousewheel, Autoplay, Navigation]}
+          style={{ width: "100%" }}
         >
-          <div className="cat-img-wrap">
-            <img src={cat.img} alt={cat.title} className="cat-img" />
-          </div>
-          <h3 className="cat-title" style={{ color: darkMode ? "#fff" : "#222" }}>
-            {cat.title}
-          </h3>
-        </button>
-      </SwiperSlide>
-    ))}
-  </Swiper>
-</div>
+          {categories.map((cat) => (
+            <SwiperSlide key={cat.id}>
+              <button
+                type="button"
+                className="cat-card"
+                aria-label={cat.title}
+                onClick={() => {
+                  setSelectedCategory(cat.title);
+                  setSearchItem("");
+                }}
+                style={{
+                  background:
+                    selectedCategory === cat.title
+                      ? darkMode
+                        ? "#333"
+                        : "#f8f8f8"
+                      : darkMode
+                      ? "#222"
+                      : "#fff",
+                  color: darkMode ? "#fff" : "#222",
+                  border: darkMode ? "1px solid #444" : "1px solid #eee",
+                }}
+              >
+                <div className="cat-img-wrap">
+                  <img src={cat.img} alt={cat.title} className="cat-img" />
+                </div>
+                <h3
+                  className="cat-title"
+                  style={{ color: darkMode ? "#fff" : "#222" }}
+                >
+                  {cat.title}
+                </h3>
+              </button>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
 
       {/* Search */}
-      <div className="flex justify-center w-full my-6" style={{ maxWidth: "600px", margin: "1.5rem auto" }}>
+      <div
+        className="flex justify-center w-full my-6"
+        style={{ maxWidth: "600px", margin: "1.5rem auto" }}
+      >
         <SearchItem />
       </div>
 

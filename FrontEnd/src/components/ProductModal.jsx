@@ -4,7 +4,12 @@ import CloseIcon from "@mui/icons-material/Close";
 import { ThemeContext } from "../context/ThemeProvider";
 import "../styles/ProductModal.css";
 
-const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) => {
+const ProductModal = ({
+  product,
+  onClose,
+  isEdit,
+  showOriginalExtras = false,
+}) => {
   if (!product) return null;
 
   const { darkMode } = useContext(ThemeContext);
@@ -14,7 +19,9 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
   const [selectedExtras, setSelectedExtras] = useState(
     showOriginalExtras ? product.extras || [] : []
   );
-  const [meatCount, setMeatCount] = useState(product.meatCount || product.meatOptions?.min || 1);
+  const [meatCount, setMeatCount] = useState(
+    product.meatCount || product.meatOptions?.min || 1
+  );
   const [productQuantity, setProductQuantity] = useState(product.quantity || 1);
   const [observations, setObservations] = useState(product.observations || "");
 
@@ -30,14 +37,23 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
 
   const toggleExtra = (extra) => {
     setSelectedExtras((prev) =>
-      prev.includes(extra) ? prev.filter((e) => e !== extra) : [...prev, extra]
+      prev.some((e) => e.name === extra.name)
+        ? prev.filter((e) => e.name !== extra.name)
+        : [...prev, extra]
     );
   };
 
-  const extrasToShow = showOriginalExtras ? product.originalExtras || [] : product.extras || [];
-  const extrasTotal = selectedExtras.reduce((sum, extra) => sum + extra.price, 0);
-  const meatExtraPrice = (meatCount - 1) * (product.meatOptions?.pricePerExtra || 5);
-  const totalPrice = (product.price + extrasTotal + meatExtraPrice) * productQuantity;
+  const extrasToShow = showOriginalExtras
+    ? product.originalExtras || []
+    : product.extras || [];
+  const extrasTotal = selectedExtras.reduce(
+    (sum, extra) => sum + extra.price,
+    0
+  );
+  const meatExtraPrice =
+    (meatCount - 1) * (product.meatOptions?.pricePerExtra || 5);
+  const totalPrice =
+    (product.price + extrasTotal + meatExtraPrice) * productQuantity;
 
   const handleAddOrUpdate = () => {
     const itemData = {
@@ -65,7 +81,7 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
       style={{
         background: darkMode ? "rgba(34,34,34,0.85)" : "rgba(0,0,0,0.4)",
         color: darkMode ? "#fff" : "#222",
-        zIndex: 1000
+        zIndex: 1000,
       }}
     >
       <div
@@ -86,13 +102,19 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
           <CloseIcon className="text-red-600" />
         </button>
 
-        <div className="modal-contents" style={{ color: darkMode ? "#fff" : "#222" }}>
+        <div
+          className="modal-contents"
+          style={{ color: darkMode ? "#fff" : "#222" }}
+        >
           <div className="product-image">
             <img src={product.image} alt={product.name} />
           </div>
 
           <div className="product-info">
-            <div className="modal-header" style={{ color: darkMode ? "#fff" : "#222" }}>
+            <div
+              className="modal-header"
+              style={{ color: darkMode ? "#fff" : "#222" }}
+            >
               {product.name}
             </div>
 
@@ -110,7 +132,9 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
                     >
                       <input
                         type="checkbox"
-                        checked={selectedExtras.includes(extra)}
+                        checked={selectedExtras.some(
+                          (e) => e.name === extra.name
+                        )}
                         onChange={() => toggleExtra(extra)}
                       />
                       {extra.name} (+ R$ {extra.price.toFixed(2)})
@@ -120,7 +144,10 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
               )}
 
               {product.meatOptions && (
-                <div className="meat-selector" style={{ color: darkMode ? "#fff" : "#222" }}>
+                <div
+                  className="meat-selector"
+                  style={{ color: darkMode ? "#fff" : "#222" }}
+                >
                   <h4>Quantidade de carnes</h4>
                   <button
                     onClick={() =>
@@ -143,7 +170,11 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
                   </button>
                   {meatCount > 1 && (
                     <p className="extra-meat-price">
-                      + R$ {(product.meatOptions.pricePerExtra * (meatCount - 1)).toFixed(2)}
+                      + R${" "}
+                      {(
+                        product.meatOptions.pricePerExtra *
+                        (meatCount - 1)
+                      ).toFixed(2)}
                     </p>
                   )}
                 </div>
@@ -178,7 +209,9 @@ const ProductModal = ({ product, onClose, isEdit, showOriginalExtras = false }) 
         >
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setProductQuantity((prev) => Math.max(1, prev - 1))}
+              onClick={() =>
+                setProductQuantity((prev) => Math.max(1, prev - 1))
+              }
               style={{
                 background: "transparent",
                 color: darkMode ? "#fff" : "#222",
