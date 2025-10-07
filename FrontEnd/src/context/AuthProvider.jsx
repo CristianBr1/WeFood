@@ -26,16 +26,21 @@ const AuthProvider = ({ children }) => {
 
   const updateCartItem = (updatedItem) => {
     setCart((prev) =>
-      prev.map((item) =>
-        item.cartItemId === updatedItem.cartItemId
-          ? {
-              ...item,
-              ...updatedItem,
-              originalExtras:
-                item.originalExtras || updatedItem.originalExtras || [],
-            }
-          : item
-      )
+      prev.map((item) => {
+        if (item.cartItemId === updatedItem.cartItemId) {
+          return {
+            ...item,
+            ...updatedItem,
+            extras: updatedItem.extras || [],
+            totalPrice: updatedItem.totalPrice || item.totalPrice,
+            originalExtras:
+              item.originalExtras?.length > 0
+                ? item.originalExtras
+                : updatedItem.originalExtras || [],
+          };
+        }
+        return item;
+      })
     );
   };
 
