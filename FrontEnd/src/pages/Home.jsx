@@ -1,12 +1,22 @@
-import { memo } from 'react';
-import HomeCategory from '../components/HomeCategory';
-import Navbar from '../components/Navbar';
+import { memo } from "react";
+import Navbar from "../components/Navbar";
+import HomeSlider from "../components/HomeSlider";
+import HomeCategory from "../components/HomeCategory";
 
 const Home = () => {
   return (
     <div className="Home">
       <Navbar />
-      <HomeCategory />
+
+      <div className="flex justify-center w-full my-6">
+        <div className="w-full max-w-[1200px]">
+          <HomeSlider />
+        </div>
+      </div>
+
+      <div className="w-full">
+        <HomeCategory />
+      </div>
     </div>
   );
 };
