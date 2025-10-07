@@ -135,20 +135,21 @@ const Cart = () => {
             ))}
           </ul>
         )}
-
-        <div className="w-full h-10 flex justify-center">
-          <button
-            className={`primary w-full justify-between flex items-center rounded-md cursor-pointer text-white font-bold text-lg transition ${
-              darkMode
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-green-500 hover:bg-green-600"
-            }`}
-            onClick={() => alert("Avançando para pagamento...")}
-          >
-            <span>Avançar</span>
-            <span>Total: R$ {total.toFixed(2)}</span>
-          </button>
-        </div>
+        {cart.length > 0 && (
+          <div className="w-full h-10 flex justify-center">
+            <button
+              className={`primary w-full justify-between flex items-center rounded-md cursor-pointer text-white font-bold text-lg transition ${
+                darkMode
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-green-500 hover:bg-green-600"
+              }`}
+              onClick={() => alert("Avançando para pagamento...")}
+            >
+              <span>Avançar</span>
+              <span>Total: R$ {total.toFixed(2)}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {selectedProduct && (

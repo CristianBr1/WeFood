@@ -85,48 +85,50 @@ const Navbar = () => {
       >
         <ul className="navbar-links navbar-links-centered">
           <li style={{ listStyle: "none" }}>
-            <Link 
-              to="/" 
-              style={{ 
-                color: "inherit", 
+            <Link
+              to="/"
+              style={{
+                color: "inherit",
                 textDecoration: "none",
-                fontWeight: location.pathname === "/" ? "bold" : "normal"
+                fontWeight: location.pathname === "/" ? "bold" : "normal",
               }}
             >
               Cardápio
             </Link>
           </li>
           <li style={{ listStyle: "none" }}>
-            <Link 
-              to="/perfil/1" 
-              style={{ 
-                color: "inherit", 
+            <Link
+              to="/perfil/1"
+              style={{
+                color: "inherit",
                 textDecoration: "none",
-                fontWeight: location.pathname === "/perfil/1" ? "bold" : "normal"
+                fontWeight:
+                  location.pathname === "/perfil/1" ? "bold" : "normal",
               }}
             >
               Perfil
             </Link>
           </li>
           <li style={{ listStyle: "none" }}>
-            <Link 
-              to="/sobre" 
-              style={{ 
-                color: "inherit", 
+            <Link
+              to="/sobre"
+              style={{
+                color: "inherit",
                 textDecoration: "none",
-                fontWeight: location.pathname === "/sobre" ? "bold" : "normal"
+                fontWeight: location.pathname === "/sobre" ? "bold" : "normal",
               }}
             >
               Sobre Nós
             </Link>
           </li>
           <li style={{ listStyle: "none" }}>
-            <Link 
-              to="/restaurante" 
-              style={{ 
-                color: "inherit", 
+            <Link
+              to="/restaurante"
+              style={{
+                color: "inherit",
                 textDecoration: "none",
-                fontWeight: location.pathname === "/restaurante" ? "bold" : "normal"
+                fontWeight:
+                  location.pathname === "/restaurante" ? "bold" : "normal",
               }}
             >
               Restaurante
@@ -148,23 +150,31 @@ const Navbar = () => {
             {isLargeScreen ? (
               <>
                 <div style={{ width: "100%" }}>
-                  <div className="userInfoContainer" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexDirection: "row",
-                    gap: "10px",
-                    margin: "0",
-                    width: "100%",
-                  }} >
-                    <img src={userAvatar} alt="User Avatar" className="user-avatar" style={{
-                      border: darkMode ? "2px solid #444" : "2px solid #ccc",
-                      borderRadius: "50%",
-                      width: "50px",
-                      height: "50px",
-                      background: darkMode ? "#333" : "#f0f0f0",
-                      marginBottom: "1rem",
-                    }} />
+                  <div
+                    className="userInfoContainer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "row",
+                      gap: "10px",
+                      margin: "0",
+                      width: "100%",
+                    }}
+                  >
+                    <img
+                      src={userAvatar}
+                      alt="User Avatar"
+                      className="user-avatar"
+                      style={{
+                        border: darkMode ? "2px solid #444" : "2px solid #ccc",
+                        borderRadius: "50%",
+                        width: "50px",
+                        height: "50px",
+                        background: darkMode ? "#333" : "#f0f0f0",
+                        marginBottom: "1rem",
+                      }}
+                    />
                     <div className="navbar-user-label">UserN</div>
                   </div>
                   <button
@@ -256,10 +266,11 @@ const Navbar = () => {
                     <li style={{ listStyle: "none" }}>
                       <Link
                         to="/"
-                        style={{ 
-                          color: "inherit", 
+                        style={{
+                          color: "inherit",
                           textDecoration: "none",
-                          fontWeight: location.pathname === "/" ? "bold" : "normal"
+                          fontWeight:
+                            location.pathname === "/" ? "bold" : "normal",
                         }}
                       >
                         Cardápio
@@ -268,10 +279,13 @@ const Navbar = () => {
                     <li style={{ listStyle: "none" }}>
                       <Link
                         to="/perfil/1"
-                        style={{ 
-                          color: "inherit", 
+                        style={{
+                          color: "inherit",
                           textDecoration: "none",
-                          fontWeight: location.pathname === "/perfil/1" ? "bold" : "normal"
+                          fontWeight:
+                            location.pathname === "/perfil/1"
+                              ? "bold"
+                              : "normal",
                         }}
                       >
                         Perfil
@@ -280,10 +294,11 @@ const Navbar = () => {
                     <li style={{ listStyle: "none" }}>
                       <Link
                         to="/sobre"
-                        style={{ 
-                          color: "inherit", 
+                        style={{
+                          color: "inherit",
                           textDecoration: "none",
-                          fontWeight: location.pathname === "/sobre" ? "bold" : "normal"
+                          fontWeight:
+                            location.pathname === "/sobre" ? "bold" : "normal",
                         }}
                       >
                         Sobre
@@ -292,10 +307,13 @@ const Navbar = () => {
                     <li style={{ listStyle: "none" }}>
                       <Link
                         to="/restaurante"
-                        style={{ 
-                          color: "inherit", 
+                        style={{
+                          color: "inherit",
                           textDecoration: "none",
-                          fontWeight: location.pathname === "/restaurante" ? "bold" : "normal"
+                          fontWeight:
+                            location.pathname === "/restaurante"
+                              ? "bold"
+                              : "normal",
                         }}
                       >
                         Restaurante
@@ -304,24 +322,32 @@ const Navbar = () => {
                   </ul>
                 </div>
                 <div style={{ width: "100%" }}>
-                  <div className="userInfoContainer" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexDirection: "row",
-                    gap: "10px",
-                    margin: "0",
-                    width: "100%",
-                  }} >
-                    <img src={userAvatar} alt="User Avatar" className="user-avatar" style={{
-                      border: darkMode ? "2px solid #444" : "2px solid #ccc",
-                      borderRadius: "50%",
-                      width: "50px",
-                      height: "50px",
-                      background: darkMode ? "#333" : "#f0f0f0",
-                      marginBottom: "1rem",
-                    }} />
-                    <div className="navbar-user-label" >UserN</div>
+                  <div
+                    className="userInfoContainer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "row",
+                      gap: "10px",
+                      margin: "0",
+                      width: "100%",
+                    }}
+                  >
+                    <img
+                      src={userAvatar}
+                      alt="User Avatar"
+                      className="user-avatar"
+                      style={{
+                        border: darkMode ? "2px solid #444" : "2px solid #ccc",
+                        borderRadius: "50%",
+                        width: "50px",
+                        height: "50px",
+                        background: darkMode ? "#333" : "#f0f0f0",
+                        marginBottom: "1rem",
+                      }}
+                    />
+                    <div className="navbar-user-label">UserN</div>
                   </div>
                   <button
                     onClick={toggleDarkMode}
@@ -333,7 +359,8 @@ const Navbar = () => {
                   >
                     {darkMode ? "☀ Tema Claro" : "☽ Tema Escuro"}
                   </button>
-                  <button className="navbar-dropdown-btn"
+                  <button
+                    className="navbar-dropdown-btn"
                     style={{
                       background: darkMode ? "#444" : "#eee",
                       color: darkMode ? "#fff" : "#222",
