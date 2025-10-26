@@ -1,7 +1,9 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "../styles/Navbar.css";
+
+import userAvatar from "../assets/images/placeholder1.png";
 
 const Navbar = () => {
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
@@ -9,6 +11,7 @@ const Navbar = () => {
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth > 1224);
   const dropdownRef = useRef(null);
   const hamburgerRef = useRef(null);
+  const location = useLocation();
 
   useEffect(() => {
     const handleResize = () => setIsLargeScreen(window.innerWidth > 1224);
@@ -82,23 +85,53 @@ const Navbar = () => {
       >
         <ul className="navbar-links navbar-links-centered">
           <li style={{ listStyle: "none" }}>
-            <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
+            <Link
+              to="/"
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontWeight: location.pathname === "/" ? "bold" : "normal",
+              }}
+            >
               Cardápio
             </Link>
           </li>
           <li style={{ listStyle: "none" }}>
-            <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
-              Favoritos
+            <Link
+              to="/perfil/1"
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontWeight:
+                  location.pathname === "/perfil/1" ? "bold" : "normal",
+              }}
+            >
+              Perfil
             </Link>
           </li>
           <li style={{ listStyle: "none" }}>
-            <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
-              Sobre
+            <Link
+              to="/sobre"
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontWeight: location.pathname === "/sobre" ? "bold" : "normal",
+              }}
+            >
+              Sobre Nós
             </Link>
           </li>
           <li style={{ listStyle: "none" }}>
-            <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
-              Suporte
+            <Link
+              to="/restaurante"
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontWeight:
+                  location.pathname === "/restaurante" ? "bold" : "normal",
+              }}
+            >
+              Restaurante
             </Link>
           </li>
         </ul>
@@ -117,30 +150,33 @@ const Navbar = () => {
             {isLargeScreen ? (
               <>
                 <div style={{ width: "100%" }}>
-                  <div className="navbar-user-label">USUÁRIO</div>
-                  <Link
-                    to="/perfil"
+                  <div
+                    className="userInfoContainer"
                     style={{
-                      padding: "0.5rem 1rem",
-                      borderRadius: "20px",
-                      border: "none",
-                      background: darkMode ? "#444" : "#eee",
-                      color: darkMode ? "#fff" : "#222",
-                      cursor: "pointer",
-                      marginTop: "0.5rem",
-                      width: "100%",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontWeight: "500",
-                      textDecoration: "none",
+                      flexDirection: "row",
+                      gap: "10px",
+                      margin: "0",
+                      width: "100%",
                     }}
                   >
-                    <span style={{ marginRight: "0.4em", fontSize: "1.2em" }}>
-                      {darkMode ? "☻" : "☺︎"}
-                    </span>
-                    Seu Perfil
-                  </Link>
+                    <img
+                      src={userAvatar}
+                      alt="User Avatar"
+                      className="user-avatar"
+                      style={{
+                        border: darkMode ? "2px solid #444" : "2px solid #ccc",
+                        borderRadius: "50%",
+                        width: "50px",
+                        height: "50px",
+                        background: darkMode ? "#333" : "#f0f0f0",
+                        marginBottom: "1rem",
+                      }}
+                    />
+                    <div className="navbar-user-label">UserN</div>
+                  </div>
                   <button
                     onClick={toggleDarkMode}
                     style={{
@@ -158,6 +194,29 @@ const Navbar = () => {
                     }}
                   >
                     {darkMode ? "☀ Tema Claro" : "☽ Tema Escuro"}
+                  </button>
+                  <button
+                    style={{
+                      padding: "0.5rem 1rem",
+                      borderRadius: "20px",
+                      border: "none",
+                      background: darkMode ? "#444" : "#eee",
+                      color: darkMode ? "#fff" : "#222",
+                      fontFamily: "inherit",
+                      fontSize: "1rem",
+                      cursor: "pointer",
+                      fontWeight: "500",
+                      marginTop: "0.5rem",
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <span style={{ marginRight: "0.4em", fontSize: "1.2em" }}>
+                      🔔
+                    </span>
+                    Notificações
                   </button>
                   <Link
                     to="/menu"
@@ -207,51 +266,101 @@ const Navbar = () => {
                     <li style={{ listStyle: "none" }}>
                       <Link
                         to="/"
-                        style={{ color: "inherit", textDecoration: "none" }}
+                        style={{
+                          color: "inherit",
+                          textDecoration: "none",
+                          fontWeight:
+                            location.pathname === "/" ? "bold" : "normal",
+                        }}
                       >
                         Cardápio
                       </Link>
                     </li>
                     <li style={{ listStyle: "none" }}>
                       <Link
-                        to="/"
-                        style={{ color: "inherit", textDecoration: "none" }}
+                        to="/perfil/1"
+                        style={{
+                          color: "inherit",
+                          textDecoration: "none",
+                          fontWeight:
+                            location.pathname === "/perfil/1"
+                              ? "bold"
+                              : "normal",
+                        }}
                       >
-                        Favoritos
+                        Perfil
                       </Link>
                     </li>
                     <li style={{ listStyle: "none" }}>
                       <Link
-                        to="/"
-                        style={{ color: "inherit", textDecoration: "none" }}
+                        to="/sobre"
+                        style={{
+                          color: "inherit",
+                          textDecoration: "none",
+                          fontWeight:
+                            location.pathname === "/sobre" ? "bold" : "normal",
+                        }}
                       >
                         Sobre
                       </Link>
                     </li>
                     <li style={{ listStyle: "none" }}>
                       <Link
-                        to="/"
-                        style={{ color: "inherit", textDecoration: "none" }}
+                        to="/restaurante"
+                        style={{
+                          color: "inherit",
+                          textDecoration: "none",
+                          fontWeight:
+                            location.pathname === "/restaurante"
+                              ? "bold"
+                              : "normal",
+                        }}
                       >
-                        Suporte
+                        Restaurante
                       </Link>
                     </li>
                   </ul>
                 </div>
                 <div style={{ width: "100%" }}>
                   <div
+                    className="userInfoContainer"
                     style={{
-                      fontWeight: "bold",
-                      fontSize: "1.1rem",
-                      marginBottom: "1rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "row",
+                      gap: "10px",
+                      margin: "0",
                       width: "100%",
-                      textAlign: "left",
                     }}
                   >
-                    USUÁRIO
+                    <img
+                      src={userAvatar}
+                      alt="User Avatar"
+                      className="user-avatar"
+                      style={{
+                        border: darkMode ? "2px solid #444" : "2px solid #ccc",
+                        borderRadius: "50%",
+                        width: "50px",
+                        height: "50px",
+                        background: darkMode ? "#333" : "#f0f0f0",
+                        marginBottom: "1rem",
+                      }}
+                    />
+                    <div className="navbar-user-label">UserN</div>
                   </div>
                   <button
-                    className="navbar-dropdown-btn navbar-dropdown-link"
+                    onClick={toggleDarkMode}
+                    className="navbar-dropdown-btn"
+                    style={{
+                      background: darkMode ? "#444" : "#eee",
+                      color: darkMode ? "#fff" : "#222",
+                    }}
+                  >
+                    {darkMode ? "☀ Tema Claro" : "☽ Tema Escuro"}
+                  </button>
+                  <button
+                    className="navbar-dropdown-btn"
                     style={{
                       background: darkMode ? "#444" : "#eee",
                       color: darkMode ? "#fff" : "#222",
@@ -262,26 +371,15 @@ const Navbar = () => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      textAlign: "center",
                       fontWeight: "500",
                       cursor: "pointer",
                       marginBottom: "0.5rem",
                     }}
                   >
                     <span style={{ marginRight: "0.4em", fontSize: "1.2em" }}>
-                      {darkMode ? "☻" : "☺︎"}
+                      🔔
                     </span>
-                    Perfil
-                  </button>
-                  <button
-                    onClick={toggleDarkMode}
-                    className="navbar-dropdown-btn"
-                    style={{
-                      background: darkMode ? "#444" : "#eee",
-                      color: darkMode ? "#fff" : "#222",
-                    }}
-                  >
-                    {darkMode ? "☀ Tema Claro" : "☽ Tema Escuro"}
+                    Notificações
                   </button>
                   <Link
                     to="/menu"
@@ -325,7 +423,7 @@ const Navbar = () => {
         className="navbar-logo"
         style={{ fontWeight: "bold", fontSize: "1.5rem" }}
       >
-        Logo
+        We<span></span>Food
       </div>
     </nav>
   );

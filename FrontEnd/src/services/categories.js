@@ -1,9 +1,15 @@
+import hamburguer from "../assets/images/hamburguer.png";
+import combos from "../assets/images/combos.png";
+import bebidas from "../assets/images/bebidas.png";
+import sobremesa from "../assets/images/sobremesa.png";
+import extras from "../assets/images/extras.png";
+
 const categories = [
-  { id: 1, title: "Hamburguer", img: "https://serviceapi.spicezgold.com/download/1741661077633_gro.png" },
-  { id: 2, title: "Combos", img: "https://serviceapi.spicezgold.com/download/1741661045887_bag.png" },
-  { id: 3, title: "Bebidas", img: "https://serviceapi.spicezgold.com/download/1741661105893_well.png" },
-  { id: 4, title: "Sobremesa", img: "https://serviceapi.spicezgold.com/download/1754414198666_fashion_cat.png" },
-  { id: 5, title: "Extras", img: "https://serviceapi.spicezgold.com/download/1741661061379_foot.png" },
+  { id: 1, title: "Hamburguer", img: hamburguer },
+  { id: 2, title: "Combos", img: combos },
+  { id: 3, title: "Bebidas", img: bebidas },
+  { id: 4, title: "Sobremesa", img: sobremesa },
+  { id: 5, title: "Extras", img: extras },
 ];
 
 export default categories;
