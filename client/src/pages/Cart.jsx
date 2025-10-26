@@ -1,10 +1,12 @@
 import { useState, useContext } from "react";
+import { Link } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
 import { ThemeContext } from "../context/ThemeProvider";
 import ProductModal from "../components/ProductModal";
 import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import "../styles/Cart.css";
+import Navbar from "../components/Navbar";
 
 const Cart = () => {
   const { cart, incrementQuantity, decrementQuantity, removeFromCart } =
@@ -21,19 +23,10 @@ const Cart = () => {
         darkMode ? "bg-[#1a1a1a] text-white" : "bg-gray-100 text-gray-800"
       }`}
     >
-      <div className="w-full max-w-5xl px-4 md:px-8">
+      <Navbar />
+      <div className="w-full max-w-5xl px-4 md:px-8 !mt-20">
         <div className="flex justify-between items-center mb-10">
-          <h2 className="text-4xl font-bold">🛒 Meu Carrinho</h2>
-          <button
-            onClick={() => navigate("/")}
-            className={`px-5 py-3 font-medium transition text-sm md:text-base ${
-              darkMode
-                ? "bg-[#333] hover:bg-[#444] text-white"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-            }`}
-          >
-            ← Voltar ao Cardápio
-          </button>
+
         </div>
 
         {cart.length === 0 ? (
@@ -136,7 +129,9 @@ const Cart = () => {
           </ul>
         )}
         {cart.length > 0 && (
+           <Link to="/checkout" style={{ color: "#16a34a", fontWeight: 600 }}>
           <div className="w-full h-10 flex justify-center">
+            
             <button
               className={`primary w-full justify-between flex items-center rounded-md cursor-pointer text-white font-bold text-lg transition ${
                 darkMode
@@ -145,10 +140,14 @@ const Cart = () => {
               }`}
               onClick={() => alert("Avançando para pagamento...")}
             >
-              <span>Avançar</span>
+                   
+            Finalizar pedido
+         
               <span>Total: R$ {total.toFixed(2)}</span>
             </button>
+             
           </div>
+          </Link>
         )}
       </div>
 
