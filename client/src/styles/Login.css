@@ -1,0 +1,9 @@
+.container {
+    justify-content: center;
+    display: flex;
+    align-items: center;
+}
+
+h3 {
+    margin-top: 2vh;
+}
