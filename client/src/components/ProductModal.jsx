@@ -15,7 +15,6 @@ const ProductModal = ({
   const { darkMode } = useContext(ThemeContext);
   const { addToCart, updateCartItem } = useContext(AuthContext);
 
-  // Inicializa selectedExtras dependendo se estamos no Carrinho ou Home
   const [selectedExtras, setSelectedExtras] = useState(
     showOriginalExtras ? product.extras || [] : []
   );
@@ -25,7 +24,6 @@ const ProductModal = ({
   const [productQuantity, setProductQuantity] = useState(product.quantity || 1);
   const [observations, setObservations] = useState(product.observations || "");
 
-  // Atualiza estado se for edição
   useEffect(() => {
     if (isEdit) {
       setSelectedExtras(product.extras || []);

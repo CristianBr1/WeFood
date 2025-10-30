@@ -8,7 +8,6 @@ const AuthProvider = ({ children }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  // Carrinho específico do usuário
   const [cart, setCart] = useState(() => {
     if (user) {
       const storedCart = localStorage.getItem(`cart_${user.email}`);
@@ -19,14 +18,12 @@ const AuthProvider = ({ children }) => {
 
   const [searchItem, setSearchItem] = useState("");
 
-  // 🔄 Atualiza cart no localStorage do usuário logado
   useEffect(() => {
     if (user) {
       localStorage.setItem(`cart_${user.email}`, JSON.stringify(cart));
     }
   }, [cart, user]);
 
-  // 🔄 Atualiza user no localStorage
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -38,7 +35,6 @@ const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
-  // 🔐 Registro
   const register = (name, email, password) => {
     const users = JSON.parse(localStorage.getItem("users")) || [];
     if (users.some((u) => u.email === email)) return false;
@@ -50,7 +46,6 @@ const AuthProvider = ({ children }) => {
     return true;
   };
 
-  // 🔑 Login
   const login = (email, password) => {
     const users = JSON.parse(localStorage.getItem("users")) || [];
     const found = users.find(
@@ -63,13 +58,11 @@ const AuthProvider = ({ children }) => {
     return false;
   };
 
-  // 🚪 Logout
   const logout = () => {
     setUser(null);
     setCart([]);
   };
 
-  // 🛒 Carrinho
   const addToCart = (product) => {
     if (!user) {
       alert("Você precisa estar logado para adicionar itens ao carrinho!");
