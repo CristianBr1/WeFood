@@ -1,0 +1,8 @@
+.mySwiper {
+  max-height: 450px; 
+}
+
+.mySwiper img {
+  object-fit: cover;
+  display: block;
+}
