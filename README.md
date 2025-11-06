@@ -9,7 +9,6 @@ A pasta `Diagramas/` na raiz do projeto contém toda a documentação técnica d
 - **Diagrama Entidade-Relacionamento (DER)**: Modelagem completa do banco de dados
 - **Diagramas de Classes**: Estrutura das entidades e relacionamentos 
 - **Diagramas de Caso de Uso**: Como atores irão atuar no sistema
-- **Documentação Técnica**: Especificações e decisões de design
 
 ## Visão Geral
 
