@@ -1,3 +1,4 @@
+/* =================== OVERLAY =================== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -9,48 +10,79 @@
   align-items: center;
   justify-content: center;
   z-index: 998;
+  animation: fadeIn 0.2s ease forwards;
 }
 
+/* =================== MODAL =================== */
 .modal {
   display: flex;
   flex-direction: column;
   background: #fff;
   border-radius: 5px;
-  width: 100%;
+  width: 90%;
   max-width: 1000px;
-  height: 500px;
-  padding: 20px 20px 0 20px; 
+  height: 500px; /* desktop fixo */
+  padding: 20px;
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
-  overflow-y: auto;
-  max-height: 90vh;
   position: relative;
+  animation: scaleIn 0.2s ease forwards;
+  overflow: hidden;
+}
+
+/* =================== ANIMAÇÕES =================== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* =================== CONTEÚDO =================== */
+.modal-contents {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 150px);
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =================== IMAGEM DO PRODUTO =================== */
+.product-image {
+  flex: 0 0 450px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+/* =================== INFO DO PRODUTO =================== */
+.product-info {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  text-align: center;
 }
 
 .modal-header {
   font-size: 1.5rem;
   font-weight: bold;
-  top: 0;
-  margin-top: 0;
-  width: 96%; 
-  display: flex;
-  justify-content: center;
-  text-align: center;
+  margin: 0 0 16px;
 }
 
 .modal-body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  flex: 1;
-  overflow: hidden; 
-}
-
-.product-info {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 8px;
-  text-align: center;
-  justify-items: center;
 }
 
 .extra-option {
@@ -64,94 +96,74 @@ textarea {
   padding: 10px;
   width: 100%;
   min-height: 80px;
+  max-height: 150px;
   border: 1px solid #ddd;
   border-radius: 8px;
+  overflow-y: auto;
 }
 
+/* =================== FOOTER =================== */
 .modal-footer {
   position: sticky;
   bottom: 0;
-  width: 100%; 
-  background: white;
+  width: 100%;
   padding: 12px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  text-align: center;
+  background: inherit;
+  z-index: 1000;
 }
 
-.modal-contents {
-  display: flex;
-  gap: 20px;
-  height: calc(100vh - 150px); 
-  overflow: hidden; 
-}
-
-/* Imagem do produto */
-.product-image {
-  flex: 0 0 450px;
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-}
-
-.product-image img {
-  width: 100%;
-  height: auto;
-  border-radius: 6px;
-}
-
+/* =================== CLOSE BUTTON =================== */
 .close-button {
   position: absolute;
-  top: 8px;
-  right: 11px;
+  top: 10px;
+  right: 10px;
   cursor: pointer;
   padding: 4px;
   background-color: white;
   border-radius: 50%;
+  z-index: 1001;
 }
 
+/* =================== RESPONSIVO =================== */
 @media (max-width: 730px) {
+  .modal {
+    height: 100%;
+    width: 95%;
+    padding: 10px 20px;
+    justify-content: space-between;
+  }
+
   .modal-contents {
-    display: flex;
     flex-direction: column;
     gap: 20px;
     height: auto;
-    overflow: visible; 
+    overflow: visible;
+    align-items: center;
   }
+
   .product-image {
-    flex: none; 
-    position: static; 
-    top: auto;
-    align-self: auto;
+    flex: none;
+    width: 100%;
   }
+
   .product-image img {
+    width: 100%;
     height: auto;
-    max-height: none;
-    object-fit: contain;
+    max-height: 300px;
   }
-  .modal {
-    min-height: 100%;
-  }
-  .modal {
-    justify-content: space-between;
-    padding: 0 20px 0 20px;
-  }
+
   .modal-footer {
     justify-content: space-evenly;
+    flex-wrap: wrap;
   }
 
   .close-button {
-    margin: 0;
-    top: 0;
-    left: 0;
-    margin-left: 5px;
-    margin-top: 0;
-    cursor: pointer;
     position: fixed;
-    background: white;
-    display: flex;
-    justify-content: start;
-    border-radius: 0;
+    top: 10px;
+    left: 10px;
+    border-radius: 50%;
   }
 }

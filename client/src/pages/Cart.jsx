@@ -1,170 +1,98 @@
-import { useState, useContext } from "react";
-import { Link } from "react-router-dom";
-import AuthContext from "../context/AuthContext";
-import { ThemeContext } from "../context/ThemeProvider";
-import ProductModal from "../components/ProductModal";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useContext } from "react";
+import { Box, Button, Typography, Divider, Checkbox, IconButton } from "@mui/material";
 import { Trash2 } from "lucide-react";
-import "../styles/Cart.css";
+import { ThemeContext } from "../context/ThemeProvider";
 import Navbar from "../components/Navbar";
+import CartProductModal from "../components/CartProductModal";
+import AddressForm from "../components/AddressForm";
+import { useCartContext } from "../hooks/useCartContext";
+import { useAddressContext } from "../hooks/useAddressContext";
+
+import emptyCartImg from "../assets/images/cesta-vazia.png";
+import { getImageUrl } from "../services/config";
+import { calculateDeliveryFees } from "../config/fees.config";
 
 const Cart = () => {
-  const { cart, incrementQuantity, decrementQuantity, removeFromCart } =
-    useContext(AuthContext);
   const { darkMode } = useContext(ThemeContext);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const navigate = useNavigate();
+  const { cart, loading, updateItem, removeItem, clearCart } = useCartContext();
+  const { addresses: contextAddresses } = useAddressContext();
 
-  const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [pickup, setPickup] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+
+  const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+  const { serviceFee, deliveryFee } = calculateDeliveryFees(pickup);
+  const total = subtotal + serviceFee + deliveryFee;
+
+  useEffect(() => {
+    setAddresses(contextAddresses);
+    if (!selectedAddress && contextAddresses.length > 0) {
+      setSelectedAddress(contextAddresses[0]);
+    }
+  }, [contextAddresses, selectedAddress]);
+
+  const handleQuantityChange = (item, delta) => {
+    const newQuantity = Math.max(1, item.quantity + delta);
+    updateItem(item.cartItemId, { ...item, quantity: newQuantity });
+  };
+
+  if (loading) return <Typography>Carregando seu carrinho...</Typography>;
 
   return (
-    <div
-      className={`min-h-screen flex flex-col items-center py-12 transition-colors duration-300 ${
-        darkMode ? "bg-[#1a1a1a] text-white" : "bg-gray-100 text-gray-800"
-      }`}
-    >
+    <Box sx={{ minHeight: "100vh", backgroundColor: darkMode ? "#1a1a1a" : "#f5f5f5", color: darkMode ? "#fff" : "#222" }}>
       <Navbar />
-      <div className="w-full max-w-5xl px-4 md:px-8 !mt-20">
-        <div className="flex justify-between items-center mb-10">
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4, gap: 4, mt: 10, display: "flex", flexDirection: { xs: "column", md: "row" } }}>
+        <Box sx={{ flex: 2, display: "flex", flexDirection: "column", gap: 3 }}>
+          <Typography variant="h5" sx={{ textAlign: "center" }}>Confira seus produtos</Typography>
 
-        </div>
+          {cart.length === 0 ? (
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 4, gap: 2 }}>
+              <img src={emptyCartImg} alt="Carrinho vazio" style={{ width: 200, opacity: 0.8 }} />
+              <Typography variant="h6" sx={{ opacity: 0.7 }}>Seu carrinho está vazio</Typography>
+              <Button variant="contained" color="success" onClick={() => window.location.href = "/"}>Voltar às compras</Button>
+            </Box>
+          ) : (
+            cart.map(item => (
+              <Box key={item.cartItemId} sx={{ display: "flex", justifyContent: "space-between", p: 2, borderRadius: 2, backgroundColor: darkMode ? "#222" : "#fff", alignItems: "center", flexWrap: "wrap", cursor: "pointer" }} onClick={() => setSelectedProduct(item)}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <img src={item.image ? getImageUrl(item.image) : "/placeholder.jpg"} alt={item.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover" }} />
+                  <Box sx={{ minWidth: 150 }}>
+                    <Typography>{item.name}</Typography>
+                    {item.extras?.length > 0 && <Typography variant="body2">Extras: {item.extras.map(e => e.name).join(", ")}</Typography>}
+                    {item.observations && <Typography variant="body2">Obs: {item.observations}</Typography>}
+                    <Typography variant="body2">Unitário: R${(item.totalPrice / item.quantity).toFixed(2)}</Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: { xs: 1, md: 0 } }}>
+                  <Button variant="outlined" size="small" onClick={e => { e.stopPropagation(); handleQuantityChange(item, -1); }}>−</Button>
+                  <Typography>{item.quantity}</Typography>
+                  <Button variant="outlined" size="small" onClick={e => { e.stopPropagation(); handleQuantityChange(item, 1); }}>+</Button>
+                  <IconButton onClick={e => { e.stopPropagation(); removeItem(item.cartItemId); }} sx={{ color: "red" }}><Trash2 size={18} /></IconButton>
+                  <Typography>R$ {item.totalPrice.toFixed(2)}</Typography>
+                </Box>
+              </Box>
+            ))
+          )}
+        </Box>
 
-        {cart.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-lg text-gray-400">Seu carrinho está vazio 😕</p>
-          </div>
-        ) : (
-          <ul className="space-y-6 pb-10">
-            {cart.map((item) => (
-              <li
-                key={item.cartItemId}
-                className={`flex flex-col sm:flex-row items-center justify-between border p-8 gap-6 rounded-xl ${
-                  darkMode
-                    ? "bg-[#222] border-[#333] hover:bg-[#2a2a2a]"
-                    : "bg-white border-gray-200 hover:shadow-md"
-                }`}
-                onClick={() => setSelectedProduct(item)}
-              >
-                <div className="flex items-center gap-6 flex-1 cursor-pointer">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-28 h-28 object-cover shadow-sm rounded-lg"
-                  />
-                  <div>
-                    <h4 className="text-xl font-semibold mb-1">{item.name}</h4>
-                    {item.originalExtras?.length > 0 && (
-                      <p className="text-sm text-gray-400">
-                        Extras:{" "}
-                        {item.originalExtras
-                          .filter((extra) =>
-                            item.extras?.some((e) => e.name === extra.name)
-                          )
-                          .map((extra) => extra.name)
-                          .join(", ")}
-                      </p>
-                    )}
-                    {item.observations && (
-                      <p className="text-sm italic text-gray-400">
-                        Obs: {item.observations}
-                      </p>
-                    )}
-                    <p className="text-sm mt-2 text-gray-500">
-                      Unitário: R${" "}
-                      {(item.totalPrice / item.quantity).toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        decrementQuantity(item);
-                      }}
-                      className={`px-5 py-3 text-xl font-bold transition ${
-                        darkMode
-                          ? "bg-[#333] hover:bg-[#444]"
-                          : "hover:bg-gray-300"
-                      }`}
-                    >
-                      −
-                    </button>
-                    <span className="text-lg font-semibold w-8 text-center">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        incrementQuantity(item);
-                      }}
-                      className={`px-5 py-3 text-xl font-bold transition ${
-                        darkMode
-                          ? "bg-[#333] hover:bg-[#444]"
-                          : "text-green-500 hover:bg-gray-300"
-                      }`}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromCart(item);
-                    }}
-                    className="p-3 hover:text-red-600 text-gray-500 rounded transition flex items-center justify-center"
-                    title="Remover item"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-
-                  <div className="primary text-right font-semibold text-xl min-w-[110px]">
-                    R$ {item.totalPrice.toFixed(2)}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
         {cart.length > 0 && (
-           <Link to="/checkout" style={{ color: "#16a34a", fontWeight: 600 }}>
-          <div className="w-full h-10 flex justify-center">
-            
-            <button
-              className={`primary w-full justify-between flex items-center rounded-md cursor-pointer text-white font-bold text-lg transition ${
-                darkMode
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-green-500 hover:bg-green-600"
-              }`}
-              onClick={() => alert("Avançando para pagamento...")}
-            >
-                   
-            Finalizar pedido
-         
-              <span>Total: R$ {total.toFixed(2)}</span>
-            </button>
-             
-          </div>
-          </Link>
+          <Box sx={{ flex: 1, p: 2, borderRadius: 2, backgroundColor: darkMode ? "#222" : "#fff", display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
+            <Typography variant="h5">Resumo da compra</Typography>
+            <Divider sx={{ width: "100%" }} />
+            <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}><Typography>Subtotal</Typography><Typography>R$ {subtotal.toFixed(2)}</Typography></Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}><Typography>Taxa de serviço</Typography><Typography>R$ {serviceFee.toFixed(2)}</Typography></Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}><Typography>Taxa de entrega</Typography><Typography>R$ {pickup ? 0 : deliveryFee.toFixed(2)}</Typography></Box>
+            <Divider sx={{ width: "100%" }} />
+            <Box sx={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", width: "100%" }}><Typography>Total</Typography><Typography>R$ {total.toFixed(2)}</Typography></Box>
+            <Button variant="contained" color="success" size="large" fullWidth onClick={() => window.location.href = "/checkout"}>Ir para pagamento</Button>
+          </Box>
         )}
-      </div>
+      </Box>
 
-      {selectedProduct && (
-        <ProductModal
-          product={{
-            ...selectedProduct,
-            originalExtras:
-              selectedProduct.originalExtras || selectedProduct.extras || [],
-            extras: selectedProduct.extras || [],
-          }}
-          onClose={() => setSelectedProduct(null)}
-          isEdit={true}
-          showOriginalExtras={true}
-        />
-      )}
-    </div>
+      {selectedProduct && <CartProductModal item={selectedProduct} onClose={() => setSelectedProduct(null)} onUpdate={() => setSelectedProduct(null)} />}
+    </Box>
   );
 };
 

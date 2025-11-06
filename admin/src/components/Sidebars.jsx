@@ -1,4 +1,4 @@
-import { memo, useState, useContext } from "react";
+import { memo, useState, useContext, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
 import { FaRegImage, FaAngleDown } from "react-icons/fa6";
@@ -12,11 +12,12 @@ import { Collapse } from "react-collapse";
 import Button from "@mui/material/Button";
 import logo from "../assets/logo.png";
 
-const Sidebars = ({ isOpen, onForceOpen }) => {
+const Sidebars = ({ isOpen, onForceOpen, onClose }) => {
   const [subMenuIndex, setSubMenuIndex] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
+  const sidebarRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -33,9 +34,26 @@ const Sidebars = ({ isOpen, onForceOpen }) => {
     if (!isOpen) onForceOpen();
   };
 
-    const handleClick = () => {
+  const handleClick = () => {
     if (!isOpen) onForceOpen();
   };
+
+  // 👉 Fecha sidebar ao clicar fora (somente em telas pequenas)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isOpen &&
+        window.innerWidth < 768 && // só aplica em telas pequenas
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target)
+      ) {
+        onClose?.(); // chama a função pra fechar a sidebar
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
 
   const menuItems = [
     { icon: <RxDashboard />, label: "Dashboard", path: "/dashboard" },
@@ -71,11 +89,12 @@ const Sidebars = ({ isOpen, onForceOpen }) => {
 
   return (
     <aside
+      ref={sidebarRef}
       className={`cursor-pointer fixed top-0 left-0 h-full bg-[#f1f1f1] border-r border-[rgba(0,0,0,0.1)] shadow-md 
         transition-all duration-300 z-40 flex flex-col items-start
         ${isOpen ? "w-[250px]" : "w-[70px]"}
         ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
-        onClick={handleClick}
+      onClick={handleClick}
     >
       {/* LOGO */}
       <div className="p-4 flex flex-col items-start gap-4 mt-[60px] w-full">
@@ -117,14 +136,14 @@ const Sidebars = ({ isOpen, onForceOpen }) => {
                         key={subIndex}
                         to={sub.path}
                         onClick={() => {
-                          if (!isOpen) onForceOpen();
+                          if (window.innerWidth < 768) onClose?.(); // fecha em telas pequenas
                         }}
                       >
                         <Button
-                          className={`!justify-start !text-[13px] !font-medium !w-full !pl-9 !normal-case ${
+                          className={`justify-start! text-[13px]! font-medium! w-full! pl-9! normal-case! ${
                             location.pathname === sub.path
-                              ? "!bg-blue-100 !text-gray-900"
-                              : "!text-[rgba(0,0,0,0.7)] hover:!bg-blue-100"
+                              ? "bg-blue-100! text-gray-900!"
+                              : "text-[rgba(0,0,0,0.7)]! hover:bg-blue-100!"
                           }`}
                         >
                           <span className="block w-[5px] h-[5px] mr-2 rounded-full bg-[rgba(0,0,0,0.2)]"></span>
@@ -138,7 +157,7 @@ const Sidebars = ({ isOpen, onForceOpen }) => {
             ) : item.action ? (
               <div
                 onClick={() => {
-                  if (!isOpen) onForceOpen();
+                  if (window.innerWidth < 768) onClose?.();
                   item.action();
                 }}
               >
@@ -148,7 +167,7 @@ const Sidebars = ({ isOpen, onForceOpen }) => {
               <Link
                 to={item.path}
                 onClick={() => {
-                  if (!isOpen) onForceOpen();
+                  if (window.innerWidth < 768) onClose?.();
                 }}
               >
                 <SidebarItem

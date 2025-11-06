@@ -1,12 +1,65 @@
-# React + Vite
+# WEFood Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Visão Geral da Arquitetura
 
-Currently, two official plugins are available:
+### Camada de Serviços
+O aplicativo utiliza uma arquitetura baseada em serviços para gerenciar a comunicação com a API:
+- `services/endpoints/` - Contém módulos de serviço para domínios específicos (carrinho, endereço, autenticação, etc.)
+- `services/api.js` - Configuração base da API e interceptores
+- `services/apiService.js` - Wrappers genéricos para métodos HTTP
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Contextos e Hooks
+O gerenciamento de estado é feito através do React Context e hooks personalizados:
 
-## Expanding the ESLint configuration
+#### Contextos:
+- `AuthContext` - Estado e métodos de autenticação do usuário
+- `CartContext` - Estado e operações do carrinho de compras
+- `AddressContext` - Gerenciamento e seleção de endereços
+- `ThemeContext` - Preferências de tema claro/escuro
+- `SearchContext` - Estado da funcionalidade de busca
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+#### Hooks Personalizados:
+- `useAddress` - Gerenciamento e seleção da lista de endereços
+- `useCart` - Operações e estado do carrinho
+- `useProducts` - Busca e cache de produtos
+- `useCategories` - Gerenciamento de categorias
+- `useAuth` - Estado e métodos de autenticação
+
+### Proteção de Rotas
+As rotas protegidas são implementadas de duas formas:
+1. Componente `ProtectedRoute` - Proteção a nível de rota
+
+### Funcionalidades
+- Suporte a tema claro/escuro
+- Atualizações otimistas para operações de carrinho/endereço
+- Refresh silencioso para evitar flashes na UI
+- Estados de carregamento e spinners
+- Tratamento de erros e feedback para o usuário
+- Guardas de rota do lado do cliente
+
+### Stack Tecnológica
+- React + Vite
+- Componentes MUI
+- React Router v6
+- Context API para gerenciamento de estado
+- Jest + Testing Library
+
+### Desenvolvimento
+
+```bash
+# Instalar dependências
+npm install
+
+# Iniciar servidor de desenvolvimento
+npm run dev
+
+# Executar testes
+npm test
+
+# Build para produção
+npm run build
+
+# Crie um arquivo .env com:
+
+VITE_API_BASE=http://localhost:8000
+VITE_API_URL=http://localhost:8000/api

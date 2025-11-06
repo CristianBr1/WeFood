@@ -1,38 +1,49 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import {useAuthContext} from "../hooks/useAuthContext";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
-import { FcGoogle } from "react-icons/fc";
 import Navbar from "../components/Navbar";
 
 const Register = () => {
   const { darkMode } = useContext(ThemeContext);
-  const { register, user } = useContext(AuthContext);
+ const { register, user } = useAuthContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isShowPassword, setIsShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-    useEffect(() => {
-    if (user) {
-      navigate("/");
-    }
+  useEffect(() => {
+    if (user) navigate("/");
   }, [user, navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = register(name, email, password);
-    if (success) {
-      navigate("/");
-    } else {
-      setError("Este e-mail já está cadastrado!");
+    setLoading(true);
+    setError("");
+
+    if (password.length < 6) {
+      setError("Senha deve ter no mínimo 6 caracteres.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const success = await register(name, email, password);
+      if (success) navigate("/");
+      else setError("Erro ao registrar: e-mail já cadastrado ou inválido.");
+    } catch (err) {
+      console.error(err);
+      setError("Erro ao registrar. Tente novamente mais tarde.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,12 +52,8 @@ const Register = () => {
       backgroundColor: darkMode ? "#374151" : "#ffffff",
       color: darkMode ? "#fff" : "#000",
       borderRadius: 1,
-      "& fieldset": {
-        borderColor: darkMode ? "#555" : "#d1d5db",
-      },
-      "&:hover fieldset": {
-        borderColor: darkMode ? "#9ca3af" : "#86efac",
-      },
+      "& fieldset": { borderColor: darkMode ? "#555" : "#d1d5db" },
+      "&:hover fieldset": { borderColor: darkMode ? "#9ca3af" : "#86efac" },
       "&.Mui-focused fieldset": {
         borderColor: darkMode ? "#4ade80" : "#16a34a",
         boxShadow: darkMode
@@ -54,9 +61,7 @@ const Register = () => {
           : "0 0 0 3px rgba(34,197,94,0.08)",
       },
     },
-    "& .MuiInputLabel-root": {
-      color: darkMode ? "#fff" : "#000",
-    },
+    "& .MuiInputLabel-root": { color: darkMode ? "#fff" : "#000" },
   };
 
   return (
@@ -77,41 +82,17 @@ const Register = () => {
           color: darkMode ? "#fff" : "#111827",
         }}
       >
-        <h3
-          style={{
-            textAlign: "center",
-            marginBottom: 12,
-            fontSize: 20,
-            fontWeight: 700,
-          }}
-        >
+        <h3 style={{ textAlign: "center", marginBottom: 12, fontSize: 20, fontWeight: 700 }}>
           Criar Conta
         </h3>
 
-        {error && (
-          <p
-            style={{
-              color: "#ef4444",
-              textAlign: "center",
-              marginBottom: 12,
-            }}
-          >
-            {error}
-          </p>
-        )}
+        {error && <p style={{ color: "#ef4444", textAlign: "center", marginBottom: 12 }}>{error}</p>}
 
         <form
           onSubmit={handleSubmit}
-          style={{
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-          }}
+          style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}
         >
           <TextField
-            id="name"
-            type="text"
             label="Nome"
             variant="outlined"
             value={name}
@@ -123,9 +104,8 @@ const Register = () => {
           />
 
           <TextField
-            id="email"
-            type="email"
             label="E-mail"
+            type="email"
             variant="outlined"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -136,9 +116,8 @@ const Register = () => {
           />
 
           <TextField
-            id="password"
-            type={isShowPassword ? "text" : "password"}
             label="Senha"
+            type={isShowPassword ? "text" : "password"}
             variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -150,15 +129,10 @@ const Register = () => {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={
-                      isShowPassword ? "Ocultar senha" : "Mostrar senha"
-                    }
                     onClick={() => setIsShowPassword((s) => !s)}
                     edge="end"
                     size="large"
-                    sx={{
-                      color: darkMode ? "#d1d5db" : "#374151",
-                    }}
+                    sx={{ color: darkMode ? "#d1d5db" : "#374151" }}
                     type="button"
                   >
                     {isShowPassword ? <IoMdEye /> : <IoMdEyeOff />}
@@ -171,57 +145,16 @@ const Register = () => {
           <Button
             variant="contained"
             type="submit"
-            sx={{
-              backgroundColor: "#16a34a",
-              "&:hover": { backgroundColor: "#10b981" },
-              py: 1.2,
-              fontWeight: 600,
-            }}
+            disabled={loading}
+            sx={{ backgroundColor: "#16a34a", "&:hover": { backgroundColor: "#10b981" }, py: 1.2, fontWeight: 600 }}
           >
-            Registrar
+            {loading ? "Registrando..." : "Registrar"}
           </Button>
         </form>
 
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: 14,
-            color: darkMode ? "#d1d5db" : "#374151",
-          }}
-        >
-          Já tem uma conta?{" "}
-          <Link to="/login" style={{ color: "#16a34a", fontWeight: 600 }}>
-            Faça login
-          </Link>
+        <p style={{ textAlign: "center", marginTop: 14, color: darkMode ? "#d1d5db" : "#374151" }}>
+          Já tem uma conta? <Link to="/login" style={{ color: "#16a34a", fontWeight: 600 }}>Faça login</Link>
         </p>
-
-        <div style={{ marginTop: 14 }}>
-          <div
-            style={{
-              textAlign: "center",
-              marginBottom: 8,
-              color: darkMode ? "#9ca3af" : "#6b7280",
-            }}
-          >
-            OU
-          </div>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={<FcGoogle />}
-            sx={{
-              borderColor: "#e5e7eb",
-              color: darkMode ? "#fff" : "#111827",
-              backgroundColor: darkMode ? "#111827" : "#f8fafc",
-              "&:hover": {
-                backgroundColor: darkMode ? "#0b1220" : "#f1f5f9",
-              },
-              textTransform: "none",
-            }}
-          >
-            Login com o Google
-          </Button>
-        </div>
       </div>
     </section>
   );
