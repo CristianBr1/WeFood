@@ -1,19 +1,25 @@
 import { BrowserRouter } from "react-router-dom";
-
 import AuthProvider from "./context/AuthProvider";
+import CartProvider from "./context/CartProvider";
+import ThemeProvider from "./context/ThemeProvider";
+import SearchProvider from "./context/SearchProvider";
+import AddressProvider from "./context/AddressProvider";
 import Routes from "./routes/Routes";
-import ThemeProvider from "./context/ThemeProvider.jsx";
 
 const App = () => (
-  <div>
-    <BrowserRouter>
-      <AuthProvider>
+  <BrowserRouter>
+    <AuthProvider>
+      <CartProvider>
         <ThemeProvider>
-          <Routes />
+          <SearchProvider>
+            <AddressProvider>
+              <Routes />
+            </AddressProvider>
+          </SearchProvider>
         </ThemeProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </div>
+      </CartProvider>
+    </AuthProvider>
+  </BrowserRouter>
 );
 
 export default App;

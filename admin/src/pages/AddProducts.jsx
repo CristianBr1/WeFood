@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
 import AuthContext from "../context/AuthContext";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import IconButton from "@mui/material/IconButton";
+import {
+  TextField,
+  Button,
+  Select,
+  MenuItem,
+  IconButton,
+  Typography,
+  Box,
+} from "@mui/material";
 import { AiOutlinePlus, AiOutlineMinus } from "react-icons/ai";
+import Loading from "../components/Loading";
+
+import { CategoryService } from "../services/endpoints/category.Service";
+import { ProductService } from "../services/endpoints/product.Service";
 
 const AddProducts = () => {
   const { darkMode } = useContext(ThemeContext);
@@ -16,124 +24,282 @@ const AddProducts = () => {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [image, setImage] = useState(null);
+  const [description, setDescription] = useState("");
   const [extras, setExtras] = useState([{ name: "", price: "" }]);
+  const [meatOptions, setMeatOptions] = useState({
+    enabled: false,
+    min: 1,
+    max: 3,
+    pricePerExtra: 5,
+  });
+
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Pegar categorias do backend
+  // 🔹 Buscar categorias
   useEffect(() => {
-    fetch("/api/categories")
-      .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(err => console.error(err));
+    const loadCategories = async () => {
+      setLoading(true);
+      try {
+        const data = await CategoryService.getCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error(err);
+        setError("Erro ao carregar categorias.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCategories();
   }, []);
 
   const handleExtraChange = (index, field, value) => {
-    const newExtras = [...extras];
-    newExtras[index][field] = value;
-    setExtras(newExtras);
+    const updated = [...extras];
+    updated[index][field] = value;
+    setExtras(updated);
   };
 
-  const handleAddExtra = () => {
-    setExtras([...extras, { name: "", price: "" }]);
-  };
-
-  const handleRemoveExtra = (index) => {
-    const newExtras = extras.filter((_, i) => i !== index);
-    setExtras(newExtras);
-  };
+  const handleAddExtra = () => setExtras([...extras, { name: "", price: "" }]);
+  const handleRemoveExtra = (index) =>
+    setExtras(extras.filter((_, i) => i !== index));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!name || !price || !category || !image) {
-      setError("Preencha todos os campos obrigatórios.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("price", price);
-    formData.append("category", category);
-    formData.append("image", image);
-    formData.append("extras", JSON.stringify(extras));
+    if (!name || !price || !category || !image || !description)
+      return setError("Preencha todos os campos obrigatórios.");
 
     try {
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          Authorization: user?.token ? `Bearer ${user.token}` : "",
+      setLoading(true);
+      await ProductService.createProduct(
+        {
+          name,
+          price,
+          category,
+          description,
+          extras,
+          meatOptions,
         },
-        body: formData,
-      });
+        image,
+        user?.token
+      );
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erro ao criar produto");
-
-      setSuccess("Produto adicionado com sucesso!");
+      setSuccess("✅ Produto adicionado com sucesso!");
       setName("");
       setPrice("");
       setCategory("");
       setImage(null);
       setExtras([{ name: "", price: "" }]);
+      setMeatOptions({ enabled: false, min: 1, max: 3, pricePerExtra: 5 });
+      setDescription("");
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Erro ao adicionar produto.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className={`p-6 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"} rounded-md shadow-md`}>
-      <h2 className="text-2xl font-bold mb-4">Adicionar Produto</h2>
+    <Box
+      sx={{
+        p: 6,
+        borderRadius: 3,
+        boxShadow: 3,
+        bgcolor: darkMode ? "grey.900" : "background.paper",
+        color: darkMode ? "white" : "black",
+        maxWidth: 800,
+        mx: "auto",
+      }}
+    >
+      <Typography variant="h5" fontWeight="bold" mb={3}>
+        Adicionar Produto
+      </Typography>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      {success && <p className="text-green-500 mb-2">{success}</p>}
+      {error && (
+        <Typography color="error" mb={2}>
+          {error}
+        </Typography>
+      )}
+      {success && (
+        <Typography color="success.main" mb={2}>
+          {success}
+        </Typography>
+      )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <TextField label="Nome do Produto" value={name} onChange={(e) => setName(e.target.value)} required />
-        <TextField label="Preço" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+      {loading ? (
+        <Loading text="Processando..." />
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <TextField
+            label="Nome do Produto"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            fullWidth
+          />
+          <TextField
+            label="Preço"
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+            fullWidth
+          />
 
-        <Select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          displayEmpty
-          required
-        >
-          <MenuItem value="" disabled>Selecione a categoria</MenuItem>
-          {categories.map((cat) => (
-            <MenuItem key={cat._id} value={cat._id}>{cat.name}</MenuItem>
-          ))}
-        </Select>
+          <Select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            displayEmpty
+            required
+            fullWidth
+          >
+            <MenuItem value="" disabled>
+              Selecione a categoria
+            </MenuItem>
+            {categories.map((cat) => (
+              <MenuItem key={cat._id} value={cat._id}>
+                {cat.name}
+              </MenuItem>
+            ))}
+          </Select>
 
-        <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} required />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImage(e.target.files[0])}
+            required
+            className="p-2 border rounded-md"
+          />
 
-        {/* Extras */}
-        <div>
-          <label className="font-semibold mb-2 block">Extras (opcionais)</label>
-          {extras.map((extra, index) => (
-            <div key={index} className="flex items-center gap-2 mb-2">
-              <TextField
-                label="Nome do extra"
-                value={extra.name}
-                onChange={(e) => handleExtraChange(index, "name", e.target.value)}
-              />
-              <TextField
-                label="Preço do extra"
-                type="number"
-                value={extra.price}
-                onChange={(e) => handleExtraChange(index, "price", e.target.value)}
-              />
-              <IconButton onClick={() => handleRemoveExtra(index)}><AiOutlineMinus /></IconButton>
+          {/* Descrição */}
+          <div>
+            <label className="font-semibold mb-2 block">
+              Descrição do Produto
+            </label>
+            <textarea
+              className={`w-full p-2 rounded-md ${
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100"
+              } border outline-none resize-none`}
+              rows="3"
+              placeholder="Ex: Hambúrguer artesanal com cheddar e bacon"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Extras */}
+          <div>
+            <label className="font-semibold mb-2 block">
+              Extras (opcionais)
+            </label>
+            {extras.map((extra, index) => (
+              <div key={index} className="flex items-center gap-2 mb-2">
+                <TextField
+                  label="Nome do extra"
+                  value={extra.name}
+                  onChange={(e) =>
+                    handleExtraChange(index, "name", e.target.value)
+                  }
+                />
+                <TextField
+                  label="Preço do extra"
+                  type="number"
+                  value={extra.price}
+                  onChange={(e) =>
+                    handleExtraChange(index, "price", e.target.value)
+                  }
+                />
+                <IconButton onClick={() => handleRemoveExtra(index)}>
+                  <AiOutlineMinus />
+                </IconButton>
+              </div>
+            ))}
+            <Button onClick={handleAddExtra} startIcon={<AiOutlinePlus />}>
+              Adicionar Extra
+            </Button>
+          </div>
+
+          {/* Opções de carne */}
+          <div>
+            <label className="font-semibold mb-2 block">
+              Opções de Carne (opcional)
+            </label>
+            <div className="flex items-center gap-3 mb-2">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={meatOptions.enabled}
+                  onChange={(e) =>
+                    setMeatOptions({
+                      ...meatOptions,
+                      enabled: e.target.checked,
+                    })
+                  }
+                />{" "}
+                Habilitar seleção de carnes
+              </label>
             </div>
-          ))}
-          <Button onClick={handleAddExtra} startIcon={<AiOutlinePlus />}>Adicionar Extra</Button>
-        </div>
+            {meatOptions.enabled && (
+              <div className="grid grid-cols-3 gap-3">
+                <TextField
+                  label="Mínimo"
+                  type="number"
+                  value={meatOptions.min}
+                  onChange={(e) =>
+                    setMeatOptions({
+                      ...meatOptions,
+                      min: Number(e.target.value),
+                    })
+                  }
+                />
+                <TextField
+                  label="Máximo"
+                  type="number"
+                  value={meatOptions.max}
+                  onChange={(e) =>
+                    setMeatOptions({
+                      ...meatOptions,
+                      max: Number(e.target.value),
+                    })
+                  }
+                />
+                <TextField
+                  label="Preço adicional por carne extra"
+                  type="number"
+                  value={meatOptions.pricePerExtra}
+                  onChange={(e) =>
+                    setMeatOptions({
+                      ...meatOptions,
+                      pricePerExtra: Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
+            )}
+          </div>
 
-        <Button type="submit" variant="contained" color="primary">Adicionar Produto</Button>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: "#16a34a",
+              "&:hover": { backgroundColor: "#10b981" },
+              py: 1.2,
+              fontWeight: 600,
+              textTransform: "none",
+            }}
+          >
+            Adicionar Produto
+          </Button>
+        </form>
+      )}
+    </Box>
   );
 };
 

@@ -2,6 +2,10 @@ import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
 import AuthContext from "../context/AuthContext";
 import Button from "@mui/material/Button";
+import CategoryModal from "../components/CategoryModal";
+import { CategoryService } from "../services/endpoints/category.Service";
+import { Box, Typography } from "@mui/material";
+import Loading from "../components/Loading";
 
 const Categories = () => {
   const { darkMode } = useContext(ThemeContext);
@@ -10,117 +14,142 @@ const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
+  // 🔹 Carregar categorias
   useEffect(() => {
-    const fetchCategories = async () => {
+    const loadCategories = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/categories", {
-          headers: {
-            Authorization: user?.token ? `Bearer ${user.token}` : "",
-          },
-        });
-        if (!res.ok) throw new Error("Erro ao carregar categorias");
-        const data = await res.json();
+        const data = await CategoryService.getCategories();
         setCategories(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Erro ao carregar categorias");
       } finally {
         setLoading(false);
       }
     };
+    loadCategories();
+  }, []);
 
-    fetchCategories();
-  }, [user]);
+  // 🔹 Abrir modal de edição
+  const handleEdit = (category) => {
+    setSelectedCategory(category);
+    setModalOpen(true);
+  };
 
+  // 🔹 Callback ao salvar categoria
+  const handleSaveCategory = (updatedCategory) => {
+    setCategories((prev) =>
+      prev.map((c) => (c._id === updatedCategory._id ? updatedCategory : c))
+    );
+  };
+
+  // 🔹 Excluir categoria
   const handleDelete = async (id) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta categoria?")) return;
+    if (!window.confirm("Tem certeza que deseja excluir esta categoria?"))
+      return;
     try {
-      const res = await fetch(`/api/categories/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: user?.token ? `Bearer ${user.token}` : "",
-        },
-      });
-      if (!res.ok) throw new Error("Erro ao excluir categoria");
-      setCategories(categories.filter((c) => c.id !== id));
+      await CategoryService.deleteCategory(id);
+      setCategories((prev) => prev.filter((c) => c._id !== id));
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Erro ao excluir categoria");
     }
   };
 
-  const handleEdit = (category) => {
-    const newName = window.prompt("Editar nome da categoria:", category.name);
-    if (!newName) return;
-
-    // Atualiza backend
-    fetch(`/api/categories/${category.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: user?.token ? `Bearer ${user.token}` : "",
-      },
-      body: JSON.stringify({ name: newName }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro ao atualizar categoria");
-        setCategories(
-          categories.map((c) => (c.id === category.id ? { ...c, name: newName } : c))
-        );
-      })
-      .catch((err) => setError(err.message));
-  };
-
   return (
-    <div className={`p-6 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"} rounded-md shadow-md`}>
-      <h2 className="text-2xl font-bold mb-4">Categorias</h2>
+    <Box
+      sx={{
+        p: 4,
+        borderRadius: 2,
+        boxShadow: 3,
+        bgcolor: darkMode ? "grey.900" : "white",
+        color: darkMode ? "white" : "black",
+        minHeight: "100vh",
+      }}
+    >
+      <Typography variant="h5" fontWeight="bold" mb={3}>
+        Categorias
+      </Typography>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+      {error && (
+        <Typography color="error" mb={2}>
+          {error}
+        </Typography>
+      )}
 
       {loading ? (
-        <p>Carregando categorias...</p>
+        <Loading text="Carregando categorias..." />
+      ) : categories.length === 0 ? (
+        <Typography color="textSecondary">
+          Nenhuma categoria encontrada.
+        </Typography>
       ) : (
-        <table className="w-full border border-gray-300 rounded-md overflow-hidden">
-          <thead className={darkMode ? "bg-gray-800" : "bg-gray-100"}>
-            <tr>
-              <th className="p-2 border-b">ID</th>
-              <th className="p-2 border-b">Nome</th>
-              <th className="p-2 border-b">Imagem</th>
-              <th className="p-2 border-b">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map((c) => (
-              <tr key={c.id} className={darkMode ? "bg-gray-800 border-b border-gray-700" : "border-b"}>
-                <td className="p-2">{c.id}</td>
-                <td className="p-2">{c.name}</td>
-                <td className="p-2">
-                  {c.image ? <img src={c.image} alt={c.name} className="w-12 h-12 object-cover rounded" /> : "-"}
-                </td>
-                <td className="p-2 flex gap-2">
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="success"
-                    onClick={() => handleEdit(c)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="error"
-                    onClick={() => handleDelete(c.id)}
-                  >
-                    Excluir
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {categories.map((c) => (
+            <div
+              key={c._id}
+              className={`flex flex-col p-4 rounded-lg shadow transition-all duration-200 ${
+                darkMode
+                  ? "bg-gray-800 hover:bg-gray-700"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-4 mb-2">
+                {c.image ? (
+                  <img
+                    src={
+                      c.image.startsWith("http")
+                        ? c.image
+                        : `http://localhost:8000${c.image}`
+                    }
+                    alt={c.name}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-gray-300 rounded flex items-center justify-center text-gray-600">
+                    -
+                  </div>
+                )}
+                <Typography fontWeight={600} fontSize="1.1rem">
+                  {c.name}
+                </Typography>
+              </div>
+
+              <div className="mt-auto flex gap-2">
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="success"
+                  onClick={() => handleEdit(c)}
+                  sx={{ flex: 1, textTransform: "none" }}
+                >
+                  Editar
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="error"
+                  onClick={() => handleDelete(c._id)}
+                  sx={{ flex: 1, textTransform: "none" }}
+                >
+                  Excluir
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
-    </div>
+
+      {modalOpen && (
+        <CategoryModal
+          category={selectedCategory}
+          onClose={() => setModalOpen(false)}
+          onSave={handleSaveCategory}
+        />
+      )}
+    </Box>
   );
 };
 

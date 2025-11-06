@@ -10,7 +10,7 @@ import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 
 const Login = () => {
   const { darkMode } = useContext(ThemeContext);
-  const { login, user } = useContext(AuthContext);
+  const { login, user, loading } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isShowPassword, setIsShowPassword] = useState(false);
@@ -19,25 +19,30 @@ const Login = () => {
 
   // Redireciona se já estiver logado e for admin
   useEffect(() => {
-    if (user && user.role === "admin") {
-      navigate("/");
+    if (!loading && user && user.role === "ADMIN") {
+      navigate("/", { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
-    const loggedUser = login({ email, password }); // chama login com objeto
-    if (loggedUser) {
-      if (loggedUser.role === "admin") {
-        navigate("/"); // acesso permitido
-      } else {
-        setError("Você não tem permissão para acessar o painel de administração!");
-      }
-    } else {
+    const loggedUser = await login(email, password);
+    if (!loggedUser) {
       setError("E-mail ou senha inválidos!");
+      return;
+    }
+
+    if (loggedUser.role !== "ADMIN") {
+      setError(
+        "Você não tem permissão para acessar o painel de administração!"
+      );
+      return;
     }
   };
+
+  if (loading) return <div>Carregando...</div>; // evita flash de login
 
   const outlinedSx = {
     "& .MuiOutlinedInput-root": {
@@ -85,14 +90,21 @@ const Login = () => {
         </h3>
 
         {error && (
-          <p style={{ color: "#ef4444", textAlign: "center", marginBottom: 12 }}>
+          <p
+            style={{ color: "#ef4444", textAlign: "center", marginBottom: 12 }}
+          >
             {error}
           </p>
         )}
 
         <form
           onSubmit={handleSubmit}
-          style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
         >
           <TextField
             id="email"
@@ -122,7 +134,9 @@ const Login = () => {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={isShowPassword ? "Ocultar senha" : "Mostrar senha"}
+                    aria-label={
+                      isShowPassword ? "Ocultar senha" : "Mostrar senha"
+                    }
                     onClick={() => setIsShowPassword((s) => !s)}
                     edge="end"
                     size="large"
@@ -146,7 +160,11 @@ const Login = () => {
           >
             <Link
               to="/forgot-password"
-              style={{ color: "#16a34a", textDecoration: "none", fontWeight: 500 }}
+              style={{
+                color: "#16a34a",
+                textDecoration: "none",
+                fontWeight: 500,
+              }}
             >
               Esqueceu a senha?
             </Link>

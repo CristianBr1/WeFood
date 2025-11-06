@@ -1,376 +1,239 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
-import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useContext, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { IconButton, Button, Drawer } from "@mui/material";
+import {
+  FaRegUser,
+  FaRegHeart,
+  FaTicketAlt,
+  FaRegCommentDots,
+  FaUserShield,
+  FaRegCreditCard,
+} from "react-icons/fa";
+import { IoIosLogIn } from "react-icons/io";
+import { MdHelpOutline, MdLoyalty, MdShoppingBasket } from "react-icons/md";
 import { ShoppingCart } from "lucide-react";
+import { ThemeContext } from "../context/ThemeProvider";
+import { useCartContext } from "../hooks/useCartContext";
+import { useAuthContext } from "../hooks/useAuthContext";
+import api from "../services/api";
 import "../styles/Navbar.css";
-import userAvatar from "../assets/images/placeholder1.png";
 
 const Navbar = () => {
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
-  const { user, logout, cart = [] } = useContext(AuthContext);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth > 1224);
-  const dropdownRef = useRef(null);
-  const hamburgerRef = useRef(null);
-  const location = useLocation();
+  const { user, logout } = useAuthContext();
   const navigate = useNavigate();
+  const { cart } = useCartContext();
+
+  const [storeData, setStoreData] = useState({ name: "WeFood", logo: null });
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    const handleResize = () => setIsLargeScreen(window.innerWidth > 1224);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const user = JSON.parse(localStorage.getItem("user"));
+    const name = user?.name || "Usuário";
+    const firstName = name.split(" ")[0];
+    setUserName(firstName);
   }, []);
 
+  // 🔹 Buscar dados da loja
   useEffect(() => {
-    if (!menuOpen) return;
-    function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        hamburgerRef.current &&
-        !hamburgerRef.current.contains(event.target)
-      ) {
-        setMenuOpen(false);
+    const fetchStore = async () => {
+      try {
+        const res = await api.get("/store");
+        if (res.data) setStoreData(res.data);
+      } catch (err) {
+        console.error("Erro ao buscar dados da loja:", err);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
+    };
+    fetchStore();
+  }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  // 🔹 Total de itens no carrinho (somando quantity)
+  const totalCartItems = cart.reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0
+  );
+
+  const menuItems = [
+    { label: "Chats", icon: <FaRegCommentDots />, path: "/chats" },
+    { label: "Pedidos", icon: <MdShoppingBasket />, path: "/orders" },
+    { label: "Meus Cupons", icon: <FaTicketAlt />, path: "/coupons" },
+    { label: "Favoritos", icon: <FaRegHeart />, path: "/favorites" },
+    { label: "Pagamento", icon: <FaRegCreditCard />, path: "/payment" },
+    { label: "Fidelidade", icon: <MdLoyalty />, path: "/loyalty" },
+    { label: "Ajuda", icon: <MdHelpOutline />, path: "/help" },
+    { label: "Meus dados", icon: <FaRegUser />, path: "/profile" },
+    { label: "Segurança", icon: <FaUserShield />, path: "/security" },
+    { label: "Sair", icon: <IoIosLogIn />, path: "/logout" },
+  ];
+
+  const handleMenuItemClick = (item) => {
+    if (item.label === "Sair") {
+      logout();
+      navigate("/login");
+    } else if (item.path) {
+      navigate(item.path);
+    }
+    setDrawerOpen(false);
   };
 
   return (
-    <nav
-      className={`navbar${darkMode ? " dark" : ""}`}
-      style={{
-        background: darkMode ? "#222" : "#fff",
-        color: darkMode ? "#fff" : "#222",
-        borderBottom: darkMode ? "1.5px solid #444" : "1.5px solid #e0e0e0",
-        boxShadow: darkMode ? "none" : "0 2px 8px 0 rgba(0,0,0,0.12)",
-      }}
-    >
-      {/* Botão hambúrguer */}
-      <button
-        ref={hamburgerRef}
-        className={`navbar-hamburger${menuOpen ? " open" : ""}`}
-        aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-        onClick={(e) => {
-          e.stopPropagation();
-          setMenuOpen((open) => !open);
-        }}
+    <>
+      <nav
+        className={`navbar${darkMode ? " dark" : ""}`}
         style={{
-          background: "none",
-          border: "none",
-          width: "40px",
-          height: "40px",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 999,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          marginRight: "1rem",
-          zIndex: "2",
-          padding: 0,
+          justifyContent: "space-between",
+          padding: "0.5rem 1rem",
+          background: darkMode ? "#222" : "#fff",
           color: darkMode ? "#fff" : "#222",
+          borderBottom: darkMode ? "1.5px solid #444" : "1.5px solid #e0e0e0",
+          boxShadow: darkMode ? "none" : "0 2px 8px rgba(0,0,0,0.12)",
         }}
       >
-        <span className="hamburger-lines">
-          <span className="line line1"></span>
-          <span className="line line2"></span>
-          <span className="line line3"></span>
-        </span>
-      </button>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {storeData.logo && (
+            <img src={storeData.logo} alt="Logo" style={{ height: 40 }} />
+          )}
+          <span style={{ fontWeight: "bold", fontSize: "1.5rem" }}>
+            {storeData.name}
+          </span>
+        </div>
 
-      {/* Links principais */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          position: "relative",
-          gap: "1.5rem",
-        }}
-      >
+        {/* Links centrais */}
         <ul className="navbar-links navbar-links-centered">
           <li>
-            <Link
-              to="/"
-              style={{
-                color: "inherit",
-                textDecoration: "none",
-                fontWeight: location.pathname === "/" ? "bold" : "normal",
-              }}
-            >
+            <Link to="/" style={{ color: "inherit" }}>
               Cardápio
             </Link>
           </li>
           <li>
-            <Link
-              to="/perfil/1"
-              style={{
-                color: "inherit",
-                textDecoration: "none",
-                fontWeight:
-                  location.pathname === "/perfil/1" ? "bold" : "normal",
-              }}
-            >
-              Perfil
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/sobre"
-              style={{
-                color: "inherit",
-                textDecoration: "none",
-                fontWeight:
-                  location.pathname === "/sobre" ? "bold" : "normal",
-              }}
-            >
+            <Link to="/sobre" style={{ color: "inherit" }}>
               Sobre Nós
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/restaurante"
-              style={{
-                color: "inherit",
-                textDecoration: "none",
-                fontWeight:
-                  location.pathname === "/restaurante" ? "bold" : "normal",
-              }}
-            >
-              Restaurante
             </Link>
           </li>
         </ul>
 
-        {/* Menu dropdown */}
-        {menuOpen && (
-          <div
-            ref={dropdownRef}
-            className="navbar-dropdown-menu"
+        {/* Área direita */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Avatar / Login */}
+          <IconButton
+            onClick={() => (user ? setDrawerOpen(true) : navigate("/login"))}
             style={{
-              background: darkMode ? "#222" : "#fff",
-              color: darkMode ? "#fff" : "#222",
-              boxShadow: darkMode ? "none" : "0 0 16px rgba(0,0,0,0.12)",
-              borderRight: darkMode ? "1px solid #444" : "none",
+              background: darkMode ? "#333" : "#f5f5f5",
+              color: darkMode ? "#fff" : "#333",
+              borderRadius: "50%",
+              padding: "6px",
             }}
           >
-            {isLargeScreen ? (
-              <>
-                <div style={{ width: "100%" }}>
-                  {/* Usuário logado ou visitante */}
-                  <div
-                    className="userInfoContainer"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexDirection: "row",
-                      gap: "10px",
-                      margin: "0",
-                      width: "100%",
-                    }}
-                  >
-                    <img
-                      src={userAvatar}
-                      alt="User Avatar"
-                      className="user-avatar"
-                      style={{
-                        border: darkMode ? "2px solid #444" : "2px solid #ccc",
-                        borderRadius: "50%",
-                        width: "50px",
-                        height: "50px",
-                        background: darkMode ? "#333" : "#f0f0f0",
-                        marginBottom: "1rem",
-                      }}
-                    />
-                    <div className="navbar-user-label">
-                      {user ? user.name : "Visitante"}
-                    </div>
-                  </div>
+            {user ? <FaRegUser size={24} /> : <IoIosLogIn size={24} />}
+          </IconButton>
 
-                  {/* Tema */}
-                  <button
-                    onClick={toggleDarkMode}
-                    style={{
-                      padding: "0.5rem 1rem",
-                      borderRadius: "20px",
-                      border: "none",
-                      background: darkMode ? "#444" : "#eee",
-                      color: darkMode ? "#fff" : "#222",
-                      fontFamily: "inherit",
-                      fontSize: "1rem",
-                      cursor: "pointer",
-                      fontWeight: "500",
-                      marginTop: "0.5rem",
-                      width: "100%",
-                    }}
-                  >
-                    {darkMode ? "☀ Tema Claro" : "☽ Tema Escuro"}
-                  </button>
-
-                  {/* Links extras */}
-                  <Link
-                    to="/menu"
-                    style={{
-                      padding: "0.5rem 1rem",
-                      borderRadius: "20px",
-                      background: darkMode ? "#444" : "#eee",
-                      color: darkMode ? "#fff" : "#222",
-                      textDecoration: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      fontWeight: "500",
-                      marginTop: "0.5rem",
-                      width: "100%",
-                    }}
-                  >
-                    ⚙️ Configurações
-                  </Link>
-
-                  {/* Login / Logout */}
-                  {user ? (
-                    <button
-                      onClick={handleLogout}
-                      style={{
-                        padding: "0.5rem 1rem",
-                        borderRadius: "20px",
-                        background: darkMode ? "#444" : "#eee",
-                        color: darkMode ? "#fff" : "#222",
-                        width: "100%",
-                        marginTop: "1rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Sair
-                    </button>
-                  ) : (
-                    <Link
-                      to="/login"
-                      style={{
-                        padding: "0.5rem 1rem",
-                        borderRadius: "20px",
-                        background: darkMode ? "#444" : "#eee",
-                        color: darkMode ? "#fff" : "#222",
-                        width: "100%",
-                        marginTop: "1rem",
-                        display: "block",
-                        textAlign: "center",
-                        textDecoration: "none",
-                      }}
-                    >
-                      Entrar
-                    </Link>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Versão mobile mantém o mesmo comportamento */}
-                <div style={{ width: "100%" }}>
-                  <ul className="navbar-links-dropdown">
-                    <li><Link to="/">Cardápio</Link></li>
-                    <li><Link to="/perfil/1">Perfil</Link></li>
-                    <li><Link to="/sobre">Sobre</Link></li>
-                    <li><Link to="/restaurante">Restaurante</Link></li>
-                  </ul>
-                </div>
-                <div style={{ width: "100%", marginTop: "1rem" }}>
-                  {user ? (
-                    <button
-                      onClick={handleLogout}
-                      style={{
-                        background: darkMode ? "#444" : "#eee",
-                        color: darkMode ? "#fff" : "#222",
-                        borderRadius: "20px",
-                        border: "none",
-                        padding: "0.5rem 1rem",
-                        width: "100%",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Sair
-                    </button>
-                  ) : (
-                    <Link
-                      to="/login"
-                      style={{
-                        background: darkMode ? "#444" : "#eee",
-                        color: darkMode ? "#fff" : "#222",
-                        borderRadius: "20px",
-                        padding: "0.5rem 1rem",
-                        display: "block",
-                        textAlign: "center",
-                        textDecoration: "none",
-                      }}
-                    >
-                      Entrar
-                    </Link>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Logo */}
-      <div
-        className="navbar-logo !mr-15"
-        style={{ fontWeight: "bold", fontSize: "1.5rem" }}
-      >
-        We<span></span>Food
-      </div>
-       <button
-          onClick={() => {
-            if (user) {
-              navigate("/cart");
-            } else {
-              navigate("/login");
-            }
-          }}
-          style={{
-            position: "relative",
-            background: darkMode ? "#333" : "#f5f5f5",
-            color: darkMode ? "#fff" : "#333",
-            border: darkMode ? "1px solid #444" : "#f5f5f5",
-            padding: "0.6rem",
-            borderRadius: "8px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.2s ease",
-          }}
-          className="hover:scale-105"
-        >
-          <ShoppingCart size={22} />
-          {user && cart.length > 0 && (
-            <span
+          {/* Carrinho */}
+          {user && (
+            <button
+              onClick={() => navigate("/cart")}
               style={{
-                position: "absolute",
-                top: "0",
-                right: "0",
-                transform: "translate(35%, -35%)",
-                background: "#ef4444",
-                color: "#fff",
-                borderRadius: "50%",
-                fontSize: "0.7rem",
-                padding: "0.2rem 0.45rem",
-                fontWeight: "bold",
+                position: "relative",
+                background: darkMode ? "#333" : "#f5f5f5",
+                color: darkMode ? "#fff" : "#333",
+                border: darkMode ? "1px solid #444" : "#f5f5f5",
+                padding: "0.6rem",
+                borderRadius: "8px",
+                cursor: "pointer",
               }}
             >
-              {cart.length}
-            </span>
+              <ShoppingCart size={22} />
+              {totalCartItems > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "0",
+                    right: "0",
+                    transform: "translate(35%, -35%)",
+                    background: "#ef4444",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    fontSize: "0.7rem",
+                    padding: "0.2rem 0.45rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {totalCartItems}
+                </span>
+              )}
+            </button>
           )}
-        </button>
-        
-    </nav>
+        </div>
+      </nav>
+
+      {/* Drawer */}
+      <Drawer
+        anchor="top"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          style: {
+            height: "auto",
+            maxHeight: "90vh",
+            width: 300,
+            marginLeft: "auto",
+            marginRight: 20,
+            marginTop: 64,
+            background: darkMode ? "#222" : "#fff",
+            color: darkMode ? "#fff" : "#222",
+            padding: "1rem",
+          },
+        }}
+      >
+        <div style={{ marginBottom: "1rem", textAlign: "center" }}>
+          <div style={{ marginBottom: "0.5rem", fontWeight: 500 }}>
+            Olá, {userName}
+          </div>
+          <Button
+            onClick={toggleDarkMode}
+            style={{
+              padding: "0.5rem 1rem",
+              borderRadius: "20px",
+              border: "none",
+              background: darkMode ? "#444" : "#eee",
+              color: darkMode ? "#fff" : "#222",
+              cursor: "pointer",
+              width: "100%",
+              marginBottom: "1rem",
+              fontWeight: 500,
+            }}
+          >
+            {darkMode ? "☀ Tema Claro" : "☽ Tema Escuro"}
+          </Button>
+        </div>
+
+        {menuItems.map((item, idx) => (
+          <Button
+            key={idx}
+            fullWidth
+            onClick={() => handleMenuItemClick(item)}
+            style={{
+              marginBottom: "0.5rem",
+              justifyContent: "flex-start",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              color: darkMode ? "#fff" : "#222",
+            }}
+          >
+            {item.icon} {item.label}
+          </Button>
+        ))}
+      </Drawer>
+    </>
   );
 };
 

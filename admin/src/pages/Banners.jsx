@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
 import AuthContext from "../context/AuthContext";
-import Button from "@mui/material/Button";
+import { BannerService } from "../services/endpoints/banner.Service";
+import { Box, Typography, Button } from "@mui/material";
+import Loading from "../components/Loading";
 
 const Banners = () => {
   const { darkMode } = useContext(ThemeContext);
@@ -9,117 +11,114 @@ const Banners = () => {
 
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
 
+  // 🔹 Carregar banners
   useEffect(() => {
-    const fetchBanners = async () => {
+    const loadBanners = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/banners", {
-          headers: {
-            Authorization: user?.token ? `Bearer ${user.token}` : "",
-          },
-        });
-        if (!res.ok) throw new Error("Erro ao carregar banners");
-        const data = await res.json();
+        const data = await BannerService.getBanners();
         setBanners(data);
       } catch (err) {
-        setError(err.message);
+        setError(
+          err?.response?.data?.message ||
+            err.message ||
+            "Erro ao carregar banners."
+        );
       } finally {
         setLoading(false);
       }
     };
+    loadBanners();
+  }, []);
 
-    fetchBanners();
-  }, [user]);
-
+  // 🔹 Excluir banner
   const handleDelete = async (id) => {
     if (!window.confirm("Tem certeza que deseja excluir este banner?")) return;
+
     try {
-      const res = await fetch(`/api/banners/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: user?.token ? `Bearer ${user.token}` : "",
-        },
-      });
-      if (!res.ok) throw new Error("Erro ao excluir banner");
-      setBanners(banners.filter((b) => b.id !== id));
+      setDeletingId(id);
+      await BannerService.deleteBanner(id, user?.token);
+      setBanners((prev) => prev.filter((b) => b._id !== id));
     } catch (err) {
-      setError(err.message);
+      setError(
+        err?.response?.data?.message || err.message || "Erro ao excluir banner."
+      );
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  const handleEdit = (banner) => {
-    const newTitle = window.prompt("Editar título do banner (opcional):", banner.title || "");
-    if (newTitle === null) return;
-
-    fetch(`/api/banners/${banner.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: user?.token ? `Bearer ${user.token}` : "",
-      },
-      body: JSON.stringify({ title: newTitle }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro ao atualizar banner");
-        setBanners(
-          banners.map((b) => (b.id === banner.id ? { ...b, title: newTitle } : b))
-        );
-      })
-      .catch((err) => setError(err.message));
-  };
+  if (loading) return <Loading text="Carregando banners..." />;
 
   return (
-    <div className={`p-6 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"} rounded-md shadow-md`}>
-      <h2 className="text-2xl font-bold mb-4">Banners da Home</h2>
+    <Box
+      sx={{
+        p: 6,
+        minHeight: "100vh",
+        bgcolor: darkMode ? "grey.900" : "grey.50",
+        color: darkMode ? "white" : "black",
+      }}
+    >
+      <Typography variant="h5" fontWeight="bold" mb={4}>
+        Banners da Home
+      </Typography>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-
-      {loading ? (
-        <p>Carregando banners...</p>
-      ) : (
-        <table className="w-full border border-gray-300 rounded-md overflow-hidden">
-          <thead className={darkMode ? "bg-gray-800" : "bg-gray-100"}>
-            <tr>
-              <th className="p-2 border-b">ID</th>
-              <th className="p-2 border-b">Título</th>
-              <th className="p-2 border-b">Imagem</th>
-              <th className="p-2 border-b">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {banners.map((b) => (
-              <tr key={b.id} className={darkMode ? "bg-gray-800 border-b border-gray-700" : "border-b"}>
-                <td className="p-2">{b.id}</td>
-                <td className="p-2">{b.title || "-"}</td>
-                <td className="p-2">
-                  {b.image ? <img src={b.image} alt={b.title || "Banner"} className="w-24 h-12 object-cover rounded" /> : "-"}
-                </td>
-                <td className="p-2 flex gap-2">
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="success"
-                    onClick={() => handleEdit(b)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="error"
-                    onClick={() => handleDelete(b.id)}
-                  >
-                    Excluir
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {error && (
+        <Typography color="error" mb={3}>
+          {error}
+        </Typography>
       )}
-    </div>
+
+      {banners.length === 0 ? (
+        <Typography color="textSecondary">Nenhum banner encontrado.</Typography>
+      ) : (
+        <div className="grid gap-6">
+          {banners.map((b) => (
+            <div
+              key={b._id}
+              className={`relative rounded-xl overflow-hidden shadow-md border ${
+                darkMode ? "border-gray-700 bg-gray-800" : "bg-white"
+              }`}
+            >
+              {b.image ? (
+                <img
+                  src={
+                    b.image.startsWith("http")
+                      ? b.image
+                      : `http://localhost:8000${b.image}`
+                  }
+                  alt={b.title || "Banner"}
+                  className="w-full h-64 object-cover"
+                />
+              ) : (
+                <div className="w-full h-64 flex items-center justify-center text-gray-400">
+                  Sem imagem
+                </div>
+              )}
+
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => handleDelete(b._id)}
+                disabled={deletingId === b._id}
+                sx={{
+                  position: "absolute",
+                  top: 12,
+                  right: 12,
+                  textTransform: "none",
+                }}
+              >
+                {deletingId === b._id ? "Excluindo..." : "Excluir"}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Box>
   );
 };
 
