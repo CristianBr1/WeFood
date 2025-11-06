@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Layout from "../pages/Layout";
 import AdminRoute from "../components/AdminRoute";
 
@@ -29,7 +29,7 @@ const Router = () => (
         </AdminRoute>
       }
     >
-      <Route index element={<Dashboard />} />
+      <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="banners" element={<Banners />} />
       <Route path="banners/add" element={<AddBanners />} />
@@ -41,6 +41,9 @@ const Router = () => (
       <Route path="pedidos" element={<Orders />} />
       <Route path="logotipo" element={<LogoManage />} />
       <Route path="minha-conta" element={<MyAccount />} />
+
+      {/* Rota 404 */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Route>
   </Routes>
 );

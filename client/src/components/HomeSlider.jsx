@@ -1,35 +1,57 @@
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
-import { FreeMode, Mousewheel, Autoplay, Navigation } from 'swiper/modules';
-import 'swiper/css/autoplay';
-import '../styles/HomeSlider.css';
+import { useEffect, useState } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import { FreeMode, Mousewheel, Autoplay, Navigation } from "swiper/modules";
+import "swiper/css/autoplay";
+import "../styles/HomeSlider.css";
 
-import slider1 from "../assets/banners/slider1.jpg";
-import slider2 from "../assets/banners/slider2.jpg";
-import slider3 from "../assets/banners/slider3.jpg";
-import slider4 from "../assets/banners/slider4.jpg";
+import { getImageUrl, API_URL } from "../services/config";
 
 const HomeSlider = () => {
+  const [banners, setBanners] = useState([]);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const res = await fetch(`${API_URL}/banners`);
+        const data = await res.json();
+        setBanners(data);
+      } catch (error) {
+        console.error("Erro ao carregar banners:", error);
+      }
+    };
+    fetchBanners();
+  }, []);
+
   return (
     <div style={{ marginTop: "70px" }}>
       <Swiper
         slidesPerView={1}
         autoplay={{ delay: 3500, disableOnInteraction: false }}
         pagination={{ clickable: true }}
-        speed={5000}
-        loop={true}
+        speed={4000}
+        loop
         modules={[FreeMode, Mousewheel, Autoplay, Navigation]}
-        freeMode={true}
+        freeMode
         mousewheel={{ forceToAxis: true }}
-        grabCursor={true}
+        grabCursor
         className="mySwiper"
       >
-        <SwiperSlide><img src={slider1} alt="Slide 1" /></SwiperSlide>
-        <SwiperSlide><img src={slider2} alt="Slide 2" /></SwiperSlide>
-        <SwiperSlide><img src={slider3} alt="Slide 3" /></SwiperSlide>
-        <SwiperSlide><img src={slider4} alt="Slide 4" /></SwiperSlide>
+        {banners.map((banner) => (
+          <SwiperSlide key={banner._id}>
+            <img
+              src={getImageUrl(banner.image)}
+              alt={banner.title || "Banner"}
+              style={{
+                width: "100%",
+                height: "450px",
+                objectFit: "cover",
+              }}
+            />
+          </SwiperSlide>
+        ))}
       </Swiper>
     </div>
   );

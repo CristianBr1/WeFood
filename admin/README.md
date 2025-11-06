@@ -1,16 +1,62 @@
-# React + Vite
+# WEFood Admin
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Visão Geral da Arquitetura
 
-Currently, two official plugins are available:
+### Camada de Serviços
+O painel de administração utiliza uma arquitetura baseada em serviços para gerenciar a comunicação com a API:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `services/endpoints/` - Contém módulos de serviço para domínios específicos (pedidos, produtos, categorias, banners, usuários, etc.)
+- `services/api.js` - Configuração base da API e interceptores
+- `services/apiService.js` - Wrappers genéricos para métodos HTTP
 
-## React Compiler
+### Contextos e Hooks
+O gerenciamento de estado é feito através do React Context e hooks personalizados:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+#### Contextos:
+- `AuthContext` - Estado e métodos de autenticação do admin
+- `ThemeContext` - Preferências de tema claro/escuro
+- `SearchContext` - Estado da funcionalidade de busca e filtros
 
-## Expanding the ESLint configuration
+#### Hooks Personalizados:
+- `useProducts` - Busca, criação, atualização e deleção de produtos
+- `useCategories` - Gerenciamento de categorias
+- `useBanners` - Gerenciamento de banners promocionais
+- `useOrders` - Acompanhamento e atualização de pedidos
+- `useAuth` - Estado e métodos de autenticação do admin
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Proteção de Rotas
+As rotas protegidas para o painel de administração são implementadas de duas formas:
+1. Componente `ProtectedRoute` - Proteção a nível de rota
+
+### Funcionalidades do Admin
+- Painel de pedidos com status de pagamento e entrega
+- Gestão de produtos, categorias e banners
+- Criação, edição e remoção de itens do cardápio
+- Suporte a tema claro/escuro
+- Feedback visual para operações (loading, sucesso, erro)
+- Filtros e busca avançada
+
+### Stack Tecnológica
+- React + Vite
+- Componentes MUI
+- React Router v6
+- Context API para gerenciamento de estado
+
+### Desenvolvimento
+
+```bash
+# Instalar dependências
+npm install
+
+# Iniciar servidor de desenvolvimento
+npm run dev
+
+# Executar testes
+npm test
+
+# Build para produção
+npm run build
+
+# Crie um arquivo .env com:
+
+VITE_API_URL=http://localhost:8000/api

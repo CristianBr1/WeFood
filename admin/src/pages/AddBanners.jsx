@@ -1,8 +1,9 @@
 import React, { useState, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
 import AuthContext from "../context/AuthContext";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
+import { BannerService } from "../services/endpoints/banner.Service";
+import { Button, TextField, Box, Typography } from "@mui/material";
+import Loading from "../components/Loading";
 
 const AddBanners = () => {
   const { darkMode } = useContext(ThemeContext);
@@ -16,75 +17,104 @@ const AddBanners = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+
     if (!imageFile) {
       setError("Selecione uma imagem para o banner.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("image", imageFile);
-    formData.append("title", title);
-
     try {
       setLoading(true);
-      const res = await fetch("/api/banners", {
-        method: "POST",
-        headers: {
-          Authorization: user?.token ? `Bearer ${user.token}` : "",
-        },
-        body: formData,
-      });
 
-      if (!res.ok) throw new Error("Erro ao enviar o banner");
+      // 🔹 Usa token do usuário
+      await BannerService.createBanner(title, imageFile, user?.token);
 
-      setSuccess("Banner enviado com sucesso!");
+      setSuccess("✅ Banner enviado com sucesso!");
       setTitle("");
       setImageFile(null);
-      setError("");
+
+      // Limpa mensagem após 3 segundos
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error(err);
-      setError(err.message);
+      // 🔹 Tratamento detalhado do erro
+      console.error("Erro ao enviar banner:", err);
+      setError(err.message || "Erro ao enviar banner.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className={`p-6 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"} rounded-md shadow-md`}>
-      <h2 className="text-2xl font-bold mb-4">Adicionar Banner</h2>
+    <Box
+      sx={{
+        p: 6,
+        borderRadius: 3,
+        boxShadow: 3,
+        bgcolor: darkMode ? "grey.900" : "background.paper",
+        color: darkMode ? "white" : "black",
+        maxWidth: 600,
+        mx: "auto",
+      }}
+    >
+      <Typography variant="h5" fontWeight="bold" mb={3}>
+        Adicionar Banner
+      </Typography>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      {success && <p className="text-green-500 mb-2">{success}</p>}
+      {error && (
+        <Typography color="error" mb={2}>
+          {error}
+        </Typography>
+      )}
+      {success && (
+        <Typography color="success.main" mb={2}>
+          {success}
+        </Typography>
+      )}
 
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <TextField
-          label="Título do Banner (opcional)"
-          variant="outlined"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          fullWidth
-          sx={{ backgroundColor: darkMode ? "#374151" : "#fff" }}
-          InputLabelProps={{ style: { color: darkMode ? "#fff" : "#000" } }}
-          InputProps={{ style: { color: darkMode ? "#fff" : "#000" } }}
-        />
+      {loading ? (
+        <Loading text="Enviando banner..." />
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <TextField
+            label="Título do Banner (opcional)"
+            variant="outlined"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            fullWidth
+            sx={{
+              backgroundColor: darkMode ? "#374151" : "#fff",
+              input: { color: darkMode ? "#fff" : "#000" },
+              label: { color: darkMode ? "#fff" : "#000" },
+            }}
+          />
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImageFile(e.target.files[0])}
-          className="p-2 border rounded-md"
-        />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImageFile(e.target.files[0])}
+            className={`p-2 rounded-md ${
+              darkMode ? "bg-gray-800 text-white" : "bg-gray-100"
+            }`}
+          />
 
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={loading}
-          sx={{ backgroundColor: "#16a34a", "&:hover": { backgroundColor: "#10b981" }, py: 1.2, fontWeight: 600 }}
-        >
-          {loading ? "Enviando..." : "Adicionar Banner"}
-        </Button>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+            sx={{
+              backgroundColor: "#16a34a",
+              "&:hover": { backgroundColor: "#10b981" },
+              py: 1.2,
+              fontWeight: 600,
+            }}
+          >
+            Adicionar Banner
+          </Button>
+        </form>
+      )}
+    </Box>
   );
 };
 

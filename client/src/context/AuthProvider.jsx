@@ -1,146 +1,122 @@
-import { useState, useEffect } from "react";
-import AuthContext from "./AuthContext";
-import { v4 as uuidv4 } from "uuid";
+// src/context/AuthProvider.jsx
+import { createContext, useContext, useState, useEffect } from "react";
+import { AuthService } from "../services/endpoints/auth.Service";
+
+export const AuthContext = createContext(null);
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-
-  const [cart, setCart] = useState(() => {
-    if (user) {
-      const storedCart = localStorage.getItem(`cart_${user.email}`);
-      return storedCart ? JSON.parse(storedCart) : [];
+    try {
+      const saved = localStorage.getItem("user");
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      // Normaliza estrutura
+      return parsed?.user
+        ? { ...parsed.user, token: parsed.token }
+        : parsed;
+    } catch {
+      return null;
     }
-    return [];
   });
 
+  const [loading, setLoading] = useState(true);
   const [searchItem, setSearchItem] = useState("");
+  const token = user?.token;
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(`cart_${user.email}`, JSON.stringify(cart));
-    }
-  }, [cart, user]);
+  // =============== LOGIN ===============
+  const login = async (email, password) => {
+    try {
+      const newUser = await AuthService.login(email, password);
+      if (!newUser) throw new Error("Falha no login");
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-      const storedCart = localStorage.getItem(`cart_${user.email}`);
-      setCart(storedCart ? JSON.parse(storedCart) : []);
-    } else {
-      localStorage.removeItem("user");
-      setCart([]);
-    }
-  }, [user]);
+      const normalized = newUser?.user
+        ? { ...newUser.user, token: newUser.token }
+        : newUser;
 
-  const register = (name, email, password) => {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    if (users.some((u) => u.email === email)) return false;
-
-    const newUser = { id: uuidv4(), name, email, password };
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-    setUser(newUser);
-    return true;
-  };
-
-  const login = (email, password) => {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const found = users.find(
-      (u) => u.email === email && u.password === password
-    );
-    if (found) {
-      setUser(found);
+      setUser(normalized);
+      localStorage.setItem("user", JSON.stringify(normalized));
       return true;
+    } catch (err) {
+      console.error("Erro no login:", err);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    setCart([]);
+  // =============== REGISTRO ===============
+  const register = async (name, email, password) => {
+    try {
+      const newUser = await AuthService.register(name, email, password);
+      if (!newUser) throw new Error("Falha no registro");
+
+      const normalized = newUser?.user
+        ? { ...newUser.user, token: newUser.token }
+        : newUser;
+
+      setUser(normalized);
+      localStorage.setItem("user", JSON.stringify(normalized));
+      return true;
+    } catch (err) {
+      console.error("Erro no registro:", err);
+      return false;
+    }
   };
 
-  const addToCart = (product) => {
-    if (!user) {
-      alert("Você precisa estar logado para adicionar itens ao carrinho!");
-      return;
+  // =============== LOGOUT ===============
+  const logout = async () => {
+    try {
+      if (token) await AuthService.logout(token);
+    } catch (err) {
+      console.warn("Erro ao fazer logout:", err);
+    } finally {
+      setUser(null);
+      setSearchItem("");
+      localStorage.removeItem("user");
     }
-    const itemData = {
-      ...product,
-      cartItemId: uuidv4(),
-      originalExtras: product.originalExtras || product.extras || [],
+  };
+
+  // =============== AUTOLOGIN (verificação) ===============
+  useEffect(() => {
+    const verifySession = async () => {
+      try {
+        const saved = localStorage.getItem("user");
+        if (!saved) return;
+
+        const parsed = JSON.parse(saved);
+        const normalized = parsed?.user
+          ? { ...parsed.user, token: parsed.token }
+          : parsed;
+
+        // opcional: checa perfil
+        if (AuthService.getProfile) {
+          const profile = await AuthService.getProfile(normalized.token);
+          setUser({ ...profile, token: normalized.token });
+        } else {
+          setUser(normalized);
+        }
+      } catch (err) {
+        console.error("Sessão inválida:", err);
+        logout();
+      } finally {
+        setLoading(false);
+      }
     };
-    setCart((prev) => [...prev, itemData]);
-  };
 
-  const updateCartItem = (updatedItem) => {
-    setCart((prev) =>
-      prev.map((item) =>
-        item.cartItemId === updatedItem.cartItemId
-          ? { ...item, ...updatedItem }
-          : item
-      )
-    );
-  };
-
-  const incrementQuantity = (item) => {
-    setCart((prev) =>
-      prev.map((p) =>
-        p.cartItemId === item.cartItemId
-          ? {
-              ...p,
-              quantity: p.quantity + 1,
-              totalPrice: (p.totalPrice / p.quantity) * (p.quantity + 1),
-            }
-          : p
-      )
-    );
-  };
-
-  const decrementQuantity = (item) => {
-    setCart((prev) =>
-      prev
-        .map((p) =>
-          p.cartItemId === item.cartItemId
-            ? {
-                ...p,
-                quantity: p.quantity - 1,
-                totalPrice: (p.totalPrice / p.quantity) * (p.quantity - 1),
-              }
-            : p
-        )
-        .filter((p) => p.quantity > 0)
-    );
-  };
-
-  const removeFromCart = (item) => {
-    setCart((prev) => prev.filter((i) => i.cartItemId !== item.cartItemId));
-  };
-
-  const clearCart = () => {
-    setCart([]);
-    if (user) localStorage.removeItem(`cart_${user.email}`);
-  };
+    verifySession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        setUser,
+        token,
+        loading,
+        searchItem,
+        setSearchItem,
         login,
         register,
         logout,
-        cart,
-        addToCart,
-        updateCartItem,
-        incrementQuantity,
-        decrementQuantity,
-        clearCart,
-        removeFromCart,
-        searchItem,
-        setSearchItem,
       }}
     >
       {children}
