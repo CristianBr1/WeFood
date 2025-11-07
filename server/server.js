@@ -35,12 +35,15 @@ app.use(
     origin: [
       "http://localhost:5173", // client local
       "http://localhost:5174", // admin local
-      "https://wefood-client.vercel.app", // client deployado
-      "https://wefood-admin.vercel.app", // admin deployado
+      "https://wefood-client.vercel.app", // antigo front
+      "https://wefood-admin.vercel.app", // admin
+      "https://we-food-green.vercel.app", // 🚀 novo front (client)
+      "https://wefood-two.vercel.app", // 🚀 novo front (admin)
     ],
     credentials: true,
   })
 );
+
 
 app.use(express.json());
 app.use(cookieParser());
