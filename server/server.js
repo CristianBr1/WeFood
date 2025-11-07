@@ -38,7 +38,7 @@ app.use(
       "https://wefood-client.vercel.app", // antigo front
       "https://wefood-admin.vercel.app", // admin
       "https://we-food-green.vercel.app", // 🚀 novo front (client)
-      "https://wefood-two.vercel.app/login", // 🚀 novo front (admin)
+      "https://wefood-two.vercel.app", // 🚀 novo front (admin)
     ],
     credentials: true,
   })
