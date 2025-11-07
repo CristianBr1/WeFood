@@ -8,6 +8,8 @@ import Loading from "../components/Loading";
 import { ProductService } from "../services/endpoints/product.Service";
 import { CategoryService } from "../services/endpoints/category.Service";
 
+import { getImageUrl } from "../services/config";
+
 const Products = () => {
   const { darkMode } = useContext(ThemeContext);
   const { user } = useContext(AuthContext);
@@ -131,11 +133,7 @@ const Products = () => {
               <div className="flex items-center gap-4">
                 {p.image ? (
                   <img
-                    src={
-                      p.image.startsWith("http")
-                        ? p.image
-                        : `http://localhost:8000${p.image}`
-                    }
+                    src={getImageUrl(p.image)}
                     alt={p.name}
                     className="w-16 h-16 object-cover rounded"
                   />

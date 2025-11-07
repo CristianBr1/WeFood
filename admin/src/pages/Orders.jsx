@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 import { OrderService } from "../services/endpoints/order.Service";
 
+import { getImageUrl } from "../services/config";
+
 const statusOptions = [
   { value: "Pendente", label: "Pendente", color: "#facc15" },
   { value: "Em preparo", label: "Em preparo", color: "#f97316" },
@@ -55,7 +57,11 @@ const Orders = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const updated = await OrderService.updateOrderStatus(id, newStatus, user?.token);
+      const updated = await OrderService.updateOrderStatus(
+        id,
+        newStatus,
+        user?.token
+      );
       setOrders((prev) =>
         prev.map((o) => (o._id === updated._id ? updated : o))
       );
@@ -236,11 +242,7 @@ const Orders = () => {
                       <li key={i} className="mb-2">
                         {item.product_details?.image?.[0] && (
                           <img
-                            src={
-                              item.product_details.image[0].startsWith("http")
-                                ? item.product_details.image[0]
-                                : `http://localhost:8000${item.product_details.image[0]}`
-                            }
+                            src={getImageUrl(item.product_details.image[0])}
                             alt={item.product_details.name}
                             className="w-16 h-16 object-cover rounded"
                           />

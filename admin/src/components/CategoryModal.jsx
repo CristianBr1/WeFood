@@ -3,6 +3,8 @@ import { ThemeContext } from "../context/ThemeProvider";
 import { Box, Button, Typography, TextField } from "@mui/material";
 import { CategoryService } from "../services/endpoints/category.Service";
 
+import { getImageUrl } from "../services/config";
+
 const CategoryModal = ({ category, onClose, onSave }) => {
   const { darkMode } = useContext(ThemeContext);
 
@@ -42,7 +44,11 @@ const CategoryModal = ({ category, onClose, onSave }) => {
 
       if (category?._id) {
         // 🟢 Atualizar categoria
-        result = await CategoryService.updateCategory(category._id, name, image);
+        result = await CategoryService.updateCategory(
+          category._id,
+          name,
+          image
+        );
       } else {
         // 🆕 Criar categoria
         result = await CategoryService.createCategory(name, image);
@@ -100,13 +106,7 @@ const CategoryModal = ({ category, onClose, onSave }) => {
 
         {preview && (
           <img
-            src={
-              preview.startsWith("blob:")
-                ? preview
-                : preview.startsWith("http")
-                ? preview
-                : `http://localhost:8000${preview}`
-            }
+            src={preview.startsWith("blob:") ? preview : getImageUrl(preview)}
             alt="Preview"
             className="w-full h-36 object-cover rounded-lg mb-3 shadow"
           />

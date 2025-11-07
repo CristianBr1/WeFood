@@ -7,6 +7,8 @@ import { CategoryService } from "../services/endpoints/category.Service";
 import { Box, Typography } from "@mui/material";
 import Loading from "../components/Loading";
 
+import { getImageUrl } from "../services/config";
+
 const Categories = () => {
   const { darkMode } = useContext(ThemeContext);
   const { user } = useContext(AuthContext);
@@ -99,11 +101,7 @@ const Categories = () => {
               <div className="flex items-center gap-4 mb-2">
                 {c.image ? (
                   <img
-                    src={
-                      c.image.startsWith("http")
-                        ? c.image
-                        : `http://localhost:8000${c.image}`
-                    }
+                    src={getImageUrl(c.image)}
                     alt={c.name}
                     className="w-16 h-16 object-cover rounded"
                   />

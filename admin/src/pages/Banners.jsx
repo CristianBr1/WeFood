@@ -5,6 +5,8 @@ import { BannerService } from "../services/endpoints/banner.Service";
 import { Box, Typography, Button } from "@mui/material";
 import Loading from "../components/Loading";
 
+import { getImageUrl } from "../services/config";
+
 const Banners = () => {
   const { darkMode } = useContext(ThemeContext);
   const { user } = useContext(AuthContext);
@@ -85,11 +87,7 @@ const Banners = () => {
             >
               {b.image ? (
                 <img
-                  src={
-                    b.image.startsWith("http")
-                      ? b.image
-                      : `http://localhost:8000${b.image}`
-                  }
+                  src={getImageUrl(b.image)}
                   alt={b.title || "Banner"}
                   className="w-full h-64 object-cover"
                 />
