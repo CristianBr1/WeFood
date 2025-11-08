@@ -101,7 +101,9 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
 
         <div className="modal-contents">
           <div className="product-image">
-            {item.image && <img src={getImageUrl(item.image)} alt={item.name} />}
+            {item.image && (
+              <img src={getImageUrl(item.image)} alt={item.name} />
+            )}
           </div>
 
           <div className="product-info">
@@ -156,7 +158,10 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
                   {meatCount > 1 && (
                     <p className="extra-meat-price">
                       + R${" "}
-                      {((meatCount - 1) * (item.meatOptions.pricePerExtra || 0)).toFixed(2)}
+                      {(
+                        (meatCount - 1) *
+                        (item.meatOptions.pricePerExtra || 0)
+                      ).toFixed(2)}
                     </p>
                   )}
                 </div>
@@ -173,42 +178,30 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
         </div>
 
         {/* Footer responsivo */}
-        <div
-          className="modal-footer"
-          style={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            justifyContent: { xs: "center", md: "flex-end" },
-            alignItems: "center",
-            gap: 12,
-            width: "100%",
-          }}
-        >
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-          >
-            -
-          </Button>
-          <span>{quantity}</span>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setQuantity((prev) => prev + 1)}
-          >
-            +
-          </Button>
+        <div className="modal-footer">
+          <div className="quantity-controls">
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+            >
+              -
+            </Button>
+            <span>{quantity}</span>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setQuantity((prev) => prev + 1)}
+            >
+              +
+            </Button>
+          </div>
 
           <Button
+          className="add-cart-btn"
             variant="contained"
             color="success"
             onClick={handleUpdate}
-            sx={{
-              borderRadius: { xs: "12px", md: "4px" },
-              width: { xs: "80%", md: "auto" },
-              marginTop: { xs: 8, md: 0 },
-            }}
           >
             Atualizar Pedido - R$ {totalPrice.toFixed(2)}
           </Button>

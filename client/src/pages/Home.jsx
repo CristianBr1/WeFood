@@ -5,6 +5,7 @@ import HomeSlider from "../components/HomeSlider";
 import HomeCategory from "../components/HomeCategory";
 import HomeProductModal from "../components/HomeProductModal";
 import { useProducts } from "../hooks/useProducts";
+import Footer from "../components/Footer";
 
 const Home = () => {
   const { productId } = useParams();
@@ -83,6 +84,7 @@ const Home = () => {
       {modalProduct && (
         <HomeProductModal product={modalProduct} onClose={closeModal} />
       )}
+      <Footer />
     </div>
   );
 };

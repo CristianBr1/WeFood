@@ -29,11 +29,16 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
       try {
         setProductLoading(true);
 
-        if (Array.isArray(initialProduct.extras) && initialProduct.meatOptions) {
+        if (
+          Array.isArray(initialProduct.extras) &&
+          initialProduct.meatOptions
+        ) {
           setProduct(initialProduct);
           setMeatCount(initialProduct.meatOptions.min || 1);
         } else {
-          const full = await getProductById(initialProduct._id || initialProduct);
+          const full = await getProductById(
+            initialProduct._id || initialProduct
+          );
           if (mounted) {
             setProduct(full);
             setMeatCount(full.meatOptions?.min || 1);
@@ -51,7 +56,9 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
     };
 
     fetchFullProduct();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [initialProduct, getProductById]);
 
   const toggleExtra = (extra) => {
@@ -65,8 +72,10 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
   if (!product) return null;
 
   const extrasTotal = selectedExtras.reduce((sum, e) => sum + e.price, 0);
-  const meatExtraPrice = (meatCount - 1) * (product?.meatOptions?.pricePerExtra || 0);
-  const totalPrice = (product.price + extrasTotal + meatExtraPrice) * productQuantity;
+  const meatExtraPrice =
+    (meatCount - 1) * (product?.meatOptions?.pricePerExtra || 0);
+  const totalPrice =
+    (product.price + extrasTotal + meatExtraPrice) * productQuantity;
 
   const handleAdd = async () => {
     await addItem({
@@ -141,7 +150,11 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
             )}
             {!productLoading && (
               <img
-                src={product.image ? getImageUrl(product.image) : "/placeholder.jpg"}
+                src={
+                  product.image
+                    ? getImageUrl(product.image)
+                    : "/placeholder.jpg"
+                }
                 alt={product.name}
               />
             )}
@@ -160,7 +173,9 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
                       <label key={idx} className="extra-option pl-5">
                         <input
                           type="checkbox"
-                          checked={selectedExtras.some((e) => e.name === extra.name)}
+                          checked={selectedExtras.some(
+                            (e) => e.name === extra.name
+                          )}
                           onChange={() => toggleExtra(extra)}
                         />
                         {extra.name} (+ R$ {extra.price.toFixed(2)})
@@ -199,7 +214,8 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
                       <p className="extra-meat-price">
                         + R${" "}
                         {(
-                          product.meatOptions.pricePerExtra * (meatCount - 1)
+                          product.meatOptions.pricePerExtra *
+                          (meatCount - 1)
                         ).toFixed(2)}
                       </p>
                     )}
@@ -218,33 +234,34 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
         </div>
 
         {!productLoading && (
-          <div
-            className="modal-footer"
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setProductQuantity((prev) => Math.max(1, prev - 1))}
-            >
-              -
-            </Button>
-            <span>{productQuantity}</span>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setProductQuantity((prev) => prev + 1)}
-            >
-              +
-            </Button>
+          <div className="modal-footer">
+            <div className="quantity-controls">
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() =>
+                  setProductQuantity((prev) => Math.max(1, prev - 1))
+                }
+              >
+                -
+              </Button>
+              <span>{productQuantity}</span>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setProductQuantity((prev) => prev + 1)}
+              >
+                +
+              </Button>
+            </div>
 
-            <Button variant="contained" color="success" onClick={handleAdd}>
-              Adicionar ao carrinho - R$ {totalPrice.toFixed(2)}
+            <Button
+              className="add-cart-btn"
+              variant="contained"
+              color="success"
+              onClick={handleAdd}
+            >
+              Adicionar R$ {totalPrice.toFixed(2)}
             </Button>
           </div>
         )}
