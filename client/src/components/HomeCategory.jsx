@@ -24,12 +24,23 @@ const HomeCategory = ({
   const { darkMode } = useContext(ThemeContext);
   const { searchItem, setSearchItem } = useContext(SearchContext);
 
-  const [selectedCategory, setSelectedCategory] = useState(selectedCategoryId || "");
-  const { categories, loading: loadingCategories, refresh: refreshCategories } = useCategories();
-  const { products, loading: loadingProducts, fetchByCategory, fetchAll } = useProducts();
+  const [selectedCategory, setSelectedCategory] = useState(
+    selectedCategoryId || ""
+  );
+  const {
+    categories,
+    loading: loadingCategories,
+    refresh: refreshCategories,
+  } = useCategories();
+  const {
+    products,
+    loading: loadingProducts,
+    fetchByCategory,
+    fetchAll,
+  } = useProducts();
 
   const initialized = useRef(false);
-  const modalOpenedRef = useRef(false);
+  const initialLoadDone = useRef(false); // ✅ controla modal da URL
 
   // -------------------- FETCH CATEGORIES --------------------
   useEffect(() => {
@@ -57,10 +68,12 @@ const HomeCategory = ({
     if (!categoryId) return;
     try {
       const data = await fetchByCategory(categoryId);
-      if (productIdFromURL && !modalOpenedRef.current) {
+
+      // Abrir modal apenas na inicialização com URL
+      if (productIdFromURL && !initialLoadDone.current) {
         const product = data.find((p) => p._id === productIdFromURL);
         if (product) {
-          modalOpenedRef.current = true;
+          initialLoadDone.current = true;
           onOpenProductModal?.(product);
         }
       }
@@ -77,18 +90,16 @@ const HomeCategory = ({
     }
   };
 
-  // Fetch products for the selected category when it changes (only when no active search)
+  // Fetch products para a categoria selecionada
   useEffect(() => {
     if (!selectedCategory) return;
-    if (searchItem.trim() !== "") return; // don't overwrite search results
+    if (searchItem.trim() !== "") return;
     fetchProductsForCategory(selectedCategory);
   }, [selectedCategory, searchItem]);
 
-  // When the search term changes, if non-empty fetch all products and let the
-  // displayedProducts filter run client-side; when cleared, re-fetch the category.
+  // Quando muda a busca
   useEffect(() => {
     if (searchItem.trim() === "") {
-      // show products for the current category
       if (selectedCategory) fetchProductsForCategory(selectedCategory);
     } else {
       fetchAllProducts();
@@ -115,7 +126,10 @@ const HomeCategory = ({
       }}
     >
       {/* Categorias */}
-      <div className="home-cat-slider" style={{ maxWidth: 1200, margin: "1.5rem auto" }}>
+      <div
+        className="home-cat-slider"
+        style={{ maxWidth: 1200, margin: "1.5rem auto" }}
+      >
         {loadingCategories ? (
           <Loading text="Carregando categorias..." />
         ) : (
@@ -146,7 +160,7 @@ const HomeCategory = ({
                     setSelectedCategory(cat._id);
                     onSelectCategory?.(cat._id);
                     setSearchItem("");
-                    modalOpenedRef.current = false; // reset ao mudar categoria
+                    // ⚠️ não abrir modal automaticamente ao clicar
                   }}
                   style={{
                     background:
@@ -186,10 +200,6 @@ const HomeCategory = ({
         id="product-list"
         className="product-list"
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          gap: "1rem",
-          padding: "1rem",
           background: darkMode ? "#1a1a1a" : "#f5f5f5",
         }}
       >

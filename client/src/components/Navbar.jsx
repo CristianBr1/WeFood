@@ -35,7 +35,7 @@ const Navbar = () => {
     setUserName(firstName);
   }, []);
 
-  // 🔹 Buscar dados da loja
+  // Buscar dados da loja
   useEffect(() => {
     const fetchStore = async () => {
       try {
@@ -48,7 +48,7 @@ const Navbar = () => {
     fetchStore();
   }, []);
 
-  // 🔹 Total de itens no carrinho (somando quantity)
+  // Total de itens no carrinho
   const totalCartItems = cart.reduce(
     (sum, item) => sum + (item.quantity || 1),
     0
@@ -97,14 +97,38 @@ const Navbar = () => {
           boxShadow: darkMode ? "none" : "0 2px 8px rgba(0,0,0,0.12)",
         }}
       >
-        {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Logo clicável */}
           {storeData.logo && (
-            <img src={storeData.logo} alt="Logo" style={{ height: 40 }} />
+            <Link
+              to="/"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                textDecoration: "none",
+                color: "inherit",
+                cursor: "pointer", // garante que o cursor indique clique
+                zIndex: 10, // evita sobreposição
+              }}
+            >
+              <img src={storeData.logo} alt="Logo" style={{ height: 40 }} />
+            </Link>
           )}
-          <span style={{ fontWeight: "bold", fontSize: "1.5rem" }}>
+
+          {/* Nome clicável */}
+          <Link
+            to="/"
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+              fontWeight: "bold",
+              fontSize: "1.5rem",
+              cursor: "pointer",
+              zIndex: 10,
+            }}
+          >
             {storeData.name}
-          </span>
+          </Link>
         </div>
 
         {/* Links centrais */}

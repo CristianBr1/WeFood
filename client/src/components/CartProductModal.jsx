@@ -52,7 +52,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
       observations,
     });
 
-    if (onUpdate) onUpdate(); // ✅ dispara atualização no carrinho
+    if (onUpdate) onUpdate();
     onClose();
   };
 
@@ -62,7 +62,6 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
       onClick={onClose}
       style={{
         background: darkMode ? "rgba(34,34,34,0.85)" : "rgba(0,0,0,0.4)",
-        color: darkMode ? "#fff" : "#222",
         zIndex: 1000,
       }}
     >
@@ -73,22 +72,36 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
           background: darkMode ? "#222" : "#fff",
           color: darkMode ? "#fff" : "#222",
           border: darkMode ? "1.5px solid #444" : "1.5px solid #eee",
+          position: "relative",
         }}
       >
+        {/* Botão de fechar responsivo */}
         <IconButton
-          className="close-button"
           onClick={onClose}
           size="large"
-          sx={{ position: "absolute", top: 10, right: 10, color: "red" }}
+          sx={{
+            position: "absolute",
+            top: 10,
+            right: { xs: "50%", md: 10 },
+            transform: { xs: "translateX(50%)", md: "none" },
+            color: "red",
+            backgroundColor: darkMode ? "#333" : "#fff",
+            borderRadius: "50%",
+            width: 40,
+            height: 40,
+            zIndex: 20,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            "&:hover": {
+              backgroundColor: darkMode ? "#444" : "#f0f0f0",
+            },
+          }}
         >
           <CloseIcon />
         </IconButton>
 
         <div className="modal-contents">
           <div className="product-image">
-            {item.image && (
-              <img src={getImageUrl(item.image)} alt={item.name} />
-            )}
+            {item.image && <img src={getImageUrl(item.image)} alt={item.name} />}
           </div>
 
           <div className="product-info">
@@ -143,10 +156,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
                   {meatCount > 1 && (
                     <p className="extra-meat-price">
                       + R${" "}
-                      {(
-                        (meatCount - 1) *
-                        (item.meatOptions.pricePerExtra || 0)
-                      ).toFixed(2)}
+                      {((meatCount - 1) * (item.meatOptions.pricePerExtra || 0)).toFixed(2)}
                     </p>
                   )}
                 </div>
@@ -162,7 +172,18 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
           </div>
         </div>
 
-        <div className="modal-footer" style={{ display: "flex", gap: 12 }}>
+        {/* Footer responsivo */}
+        <div
+          className="modal-footer"
+          style={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            justifyContent: { xs: "center", md: "flex-end" },
+            alignItems: "center",
+            gap: 12,
+            width: "100%",
+          }}
+        >
           <Button
             variant="outlined"
             size="small"
@@ -179,7 +200,16 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
             +
           </Button>
 
-          <Button variant="contained" color="success" onClick={handleUpdate}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleUpdate}
+            sx={{
+              borderRadius: { xs: "12px", md: "4px" },
+              width: { xs: "80%", md: "auto" },
+              marginTop: { xs: 8, md: 0 },
+            }}
+          >
             Atualizar Pedido - R$ {totalPrice.toFixed(2)}
           </Button>
         </div>

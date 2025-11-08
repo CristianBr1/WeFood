@@ -5,14 +5,33 @@
     width: 100%; 
     padding: 15px ; }
 
-    .product-list {
-  display: flex;
-  flex-wrap: wrap;
+.product-list {
+  display: grid;
   gap: 1.5rem;
   justify-content: center;
   padding: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
+/* 🔹 Abaixo de 500px → 2 cards por linha */
+@media (max-width: 500px) {
+  .product-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cat-card {
+    transform: scale(0.9);
+  }
+
+  .cat-title {
+    font-size: 0.8rem;
+  }
+
+  .cat-img-wrap {
+    width: 60px;
+    height: 60px;
+  }
+}
 
 .cat-card {
   display: flex;

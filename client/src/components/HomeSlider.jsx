@@ -41,15 +41,27 @@ const HomeSlider = () => {
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner._id}>
-            <img
-              src={getImageUrl(banner.image)}
-              alt={banner.title || "Banner"}
+            <div
               style={{
                 width: "100%",
-                height: "450px",
-                objectFit: "cover",
+                position: "relative",
+                paddingTop: "40%", // controla a proporção do banner (altura = 40% da largura)
               }}
-            />
+            >
+              <img
+                src={getImageUrl(banner.image)}
+                alt={banner.title || "Banner"}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: 8, // opcional: cantos arredondados
+                }}
+              />
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>

@@ -14,9 +14,10 @@ import ProtectedRoute from "../components/ProtectedRoute";
 const Router = () => {
   return (
     <Routes>
-      {/* HOME NORMAL */}
+      {/* HOME */}
       <Route path="/" element={<Home />} />
       <Route path="/category/:categoryId" element={<Home />} />
+      <Route path="/product/:productId" element={<Home />} /> {/* nova rota */}
       <Route path="/category/:categoryId/product/:productId" element={<Home />} />
 
       {/* AUTENTICAÇÃO */}
@@ -30,7 +31,7 @@ const Router = () => {
       <Route path="/perfil/:id" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
       <Route path="/restaurante" element={<ProtectedRoute><Restaurante /></ProtectedRoute>} />
 
-      {/* ROTAS DE PEDIDOS */}
+      {/* PEDIDOS */}
       <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
 
       {/* SOBRE */}
