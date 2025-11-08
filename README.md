@@ -9,7 +9,7 @@ Sistema completo de gerenciamento de restaurantes e delivery de alimentos, desen
 | Módulo | Link Online |
 |--------|--------------|
 | 🧑‍💼 Painel Administrativo | [https://wefood-two.vercel.app](https://wefood-two.vercel.app) |
-| 🍔 Aplicação Cliente | [https://wefood-client.vercel.app](https://wefood-client.vercel.app) |
+| 🍔 Aplicação Cliente | [https://wefood-client.vercel.app](https://we-food-green.vercel.app/) |
 | ⚙️ API Backend | [https://wefood.onrender.com/api](https://wefood.onrender.com/api) |
 
 ---
