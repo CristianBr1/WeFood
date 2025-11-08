@@ -1,33 +1,39 @@
-# WeFood
+# 🥡 WeFood
 
-Sistema completo de gerenciamento de restaurantes e delivery de alimentos, desenvolvido com arquitetura em três camadas: interface administrativa, aplicação cliente e API backend.
+Sistema completo de gerenciamento de restaurantes e delivery de alimentos, desenvolvido com arquitetura em três camadas: **painel administrativo**, **aplicação cliente** e **API backend em Node.js + MongoDB**.
 
-## Documentação e Diagramas
+---
 
-A pasta `Diagramas/` na raiz do projeto contém toda a documentação técnica do sistema:
+## 🌐 Links de Produção
 
-- **Diagrama Entidade-Relacionamento (DER)**: Modelagem completa do banco de dados
-- **Diagramas de Classes**: Estrutura das entidades e relacionamentos 
-- **Diagramas de Caso de Uso**: Como atores irão atuar no sistema
+| Módulo | Link Online |
+|--------|--------------|
+| 🧑‍💼 Painel Administrativo | [https://wefood-two.vercel.app](https://wefood-two.vercel.app) |
+| 🍔 Aplicação Cliente | [https://wefood-client.vercel.app](https://wefood-client.vercel.app) |
+| ⚙️ API Backend | [https://wefood.onrender.com/api](https://wefood.onrender.com/api) |
 
-## Visão Geral
+---
+
+## 📖 Visão Geral
 
 WeFood é uma plataforma de delivery que conecta restaurantes e clientes através de uma interface moderna e intuitiva. O sistema oferece:
 
-- **Painel Administrativo**: Gerenciamento completo de produtos, categorias, banners, pedidos e usuários
-- **Aplicação Cliente**: Interface para navegação, busca de produtos, carrinho de compras e finalização de pedidos
-- **API Backend**: Servidor REST com autenticação, controle de acesso e persistência de dados
+- **Painel Administrativo**: Gerenciamento completo de produtos, categorias, banners, pedidos e usuários  
+- **Aplicação Cliente**: Interface para navegação, busca de produtos, carrinho e checkout  
+- **API Backend (Node.js)**: Servidor REST com autenticação JWT, upload de imagens e persistência em MongoDB
 
-## Arquitetura do Projeto
+---
+
+## 🧱 Arquitetura do Projeto
 
 ```
 WeFood/
-├── admin/          # Painel administrativo (React)
-├── client/         # Interface do cliente (React)
-└── backend/        # API REST (Spring Boot)
+├── admin/ # Painel administrativo (React + MUI)
+├── client/ # Interface do cliente (React + Tailwind)
+└── backend/ # API REST (Node.js + Express + MongoDB)
 ```
 
-### Estrutura de Pastas
+### 📂 Estrutura de Pastas
 
 **Admin** - Painel de Administração
 ```
@@ -79,70 +85,78 @@ client/
 **Backend** - API REST
 ```
 backend/
-└── src/main/java/com/PraTi/Backend/
-    ├── BackendApplication.java     # Classe principal
-    ├── models/                     # Entidades JPA
-    │   ├── User.java               # Usuário (classe base)
-    │   ├── Cliente.java            # Cliente (herda User)
-    │   ├── Admin.java              # Administrador (herda User)
-    │   ├── Gerente.java            # Gerente (herda User)
-    │   ├── Restaurante.java        # Restaurante
-    │   ├── Item.java               # Produto/Item
-    │   ├── Pedido.java             # Pedido
-    │   └── PedidoItem.java         # Itens do pedido
-    └── repositories/               # Repositórios JPA
-        ├── UserRepository.java
-        ├── AdminRepository.java
-        ├── RestauranteRepository.java
-        └── ...
+├── src/
+│ ├── config/
+│ │ ├── db.js # Conexão com o MongoDB
+│ │ └── env.js # Variáveis de ambiente
+│ ├── controllers/ # Lógica dos endpoints
+│ │ ├── productController.js
+│ │ ├── categoryController.js
+│ │ ├── orderController.js
+│ │ └── userController.js
+│ ├── models/ # Schemas do Mongoose
+│ │ ├── Product.js
+│ │ ├── Category.js
+│ │ ├── User.js
+│ │ └── Order.js
+│ ├── routes/ # Definição das rotas
+│ │ ├── productRoutes.js
+│ │ ├── categoryRoutes.js
+│ │ ├── orderRoutes.js
+│ │ └── authRoutes.js
+│ ├── middlewares/
+│ │ ├── authMiddleware.js # Autenticação JWT
+│ │ └── errorHandler.js # Tratamento global de erros
+│ ├── utils/
+│ │ └── upload.js # Upload de imagens (multer)
+│ └── server.js # Inicialização do servidor Express
+├── .env.example
+└── package.json
 ```
 
-## Tecnologias Utilizadas
+## 🧰 Tecnologias Utilizadas
 
 ### Frontend (Admin e Client)
 
 | Tecnologia | Versão | Descrição |
-|-----------|--------|-----------|
-| React | 19.1.1 | Biblioteca para construção de interfaces |
-| React Router DOM | 7.8.2 - 7.9.4 | Roteamento de páginas |
-| Vite | 7.1.2 - 7.1.7 | Build tool e dev server |
-| TailwindCSS | 4.1.12 - 4.1.16 | Framework CSS utilitário |
-| Material-UI | 7.3.2 - 7.3.4 | Componentes React Material Design |
-| React Icons | 5.5.0 | Biblioteca de ícones |
-| Swiper | 12.0.2 | Carrossel/slider (client) |
-| UUID | 13.0.0 | Geração de IDs únicos (client) |
-| ESLint | 9.33.0 - 9.36.0 | Linter JavaScript |
+|-------------|---------|-----------|
+| React | 19.x | Biblioteca para interfaces |
+| React Router DOM | 7.x | Roteamento de páginas |
+| Vite | 7.x | Ferramenta de build e dev server |
+| TailwindCSS | 4.x | Framework CSS utilitário |
+| Material-UI | 7.x | Componentes React Material Design |
+| Swiper | 12.x | Carrossel/slider (client) |
+| UUID | 13.x | Geração de IDs únicos |
+| ESLint | 9.x | Linter JavaScript |
 
-### Backend
+### ⚙️ Backend (Node.js + MongoDB)
 
 | Tecnologia | Versão | Descrição |
-|-----------|--------|-----------|
-| Java | 21 | Linguagem de programação |
-| Spring Boot | 3.5.5 | Framework Java |
-| Spring Data JPA | 3.5.5 | Persistência de dados |
-| Spring Security | 3.5.5 | Autenticação e autorização |
-| OAuth2 Authorization Server | 3.5.5 | Servidor de autenticação |
-| PostgreSQL | Latest | Banco de dados relacional |
-| Maven | 3.x | Gerenciador de dependências |
+|-------------|---------|-----------|
+| Node.js | 20.x | Ambiente de execução |
+| Express.js | 5.x | Framework web |
+| MongoDB | 7.x | Banco de dados NoSQL |
+| Mongoose | 8.x | ODM para MongoDB |
+| JWT | 9.x | Autenticação baseada em token |
+| bcryptjs | 3.x | Criptografia de senhas |
+| dotenv | 16.x | Variáveis de ambiente |
+| multer | 1.x | Upload de arquivos |
+| cors | 2.x | Permitir acesso entre domínios |
+| nodemon | 3.x | Hot reload para desenvolvimento |
 
-### Ferramentas de Desenvolvimento
+---
 
-- **Node.js**: Requerido para executar o frontend
-- **Java Development Kit (JDK)**: Versão 21
-- **PostgreSQL**: Banco de dados
-- **Git**: Controle de versão
+## 🔑 Variáveis de Ambiente (.env)
 
-## Pré-requisitos
+```bash
+PORT=8000
+MONGO_URI=mongodb+srv://<usuario>:<senha>@cluster.mongodb.net/wefood
+JWT_SECRET=sua_chave_secreta
+CLIENT_URL=https://wefood-client.vercel.app
+ADMIN_URL=https://wefood-two.vercel.app
 
-Certifique-se de ter instalado:
 
-- Node.js (versão 18 ou superior)
-- Java JDK 21
-- PostgreSQL (versão 12 ou superior)
-- Maven 3.x (ou use o Maven Wrapper incluído)
-- Git
-
-## Instalação e Configuração
+## ▶️ Como Rodar o Projeto
 
 ### 1. Clonar o Repositório
 
@@ -151,14 +165,16 @@ git clone https://github.com/CristianBr1/WeFood.git
 cd WeFood
 ```
 
-### 2. Configurar o Banco de Dados
+### 2. 💾 Configurar o Banco de Dados
 
-Crie um banco de dados PostgreSQL:
+- Crie um banco de dados MongoDB:
+- Acesse https://cloud.mongodb.com
+- Crie um cluster gratuito
+- Adicione um usuário e configure sua senha
+- Copie a string de conexão fornecida (exemplo abaixo):
 
-```sql
-CREATE DATABASE wefood;
-CREATE USER wefood_user WITH PASSWORD 'sua_senha';
-GRANT ALL PRIVILEGES ON DATABASE wefood TO wefood_user;
+```
+MONGO_URI=mongodb+srv://wefood_user:sua_senha@cluster0.xxxxx.mongodb.net/wefood
 ```
 
 ### 3. Configurar o Backend
@@ -166,37 +182,16 @@ GRANT ALL PRIVILEGES ON DATABASE wefood TO wefood_user;
 Navegue até a pasta backend:
 
 ```bash
-cd backend
+cd ../server
 ```
 
-Edite o arquivo `src/main/resources/application.properties`:
-
-```properties
-spring.application.name=Backend
-
-# Configuração do Banco de Dados
-spring.datasource.url=jdbc:postgresql://localhost:5432/wefood
-spring.datasource.username=wefood_user
-spring.datasource.password=sua_senha
-
-# Configuração JPA
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-
-# Configuração do Servidor
-server.port=8080
-```
-
-Instale as dependências e compile:
+Instale as dependências:
 
 ```bash
-# Windows
-mvnw.cmd clean install
-
-# Linux/Mac
-./mvnw clean install
+npm install
 ```
+
+
 
 ### 4. Configurar o Admin (Painel Administrativo)
 
@@ -226,19 +221,6 @@ Instale as dependências:
 npm install
 ```
 
-## Executando a Aplicação
-
-### Iniciar o Backend
-
-Na pasta `backend`:
-
-```bash
-# Windows
-mvnw.cmd spring-boot:run
-
-# Linux/Mac
-./mvnw spring-boot:run
-```
 
 O servidor estará disponível em: `http://localhost:8080`
 
@@ -266,12 +248,6 @@ A interface do cliente estará disponível em: `http://localhost:5174` (ou outra
 
 ### Testes Manuais
 
-#### Backend
-```bash
-cd backend
-mvnw.cmd test
-```
-
 #### Frontend (Admin/Client)
 ```bash
 cd admin  # ou cd client
@@ -292,14 +268,42 @@ npm run build   # Testar build de produção
    - Navegue pelo catálogo de produtos
    - Adicione produtos ao carrinho
    - Finalize um pedido
+  
+💾 **Banco de Dados (MongoDB)**:
+
+   ### Coleções principais:
+   - users → administradores e clientes
+   - products → itens do cardápio
+   - categories → tipos de produtos
+   - orders → pedidos e status
+   - banners → imagens promocionais
 
 3. **Teste de API**:
-   - Use ferramentas como Postman ou Insomnia
-   - Endpoints principais:
-     - `GET /api/products` - Listar produtos
-     - `GET /api/categories` - Listar categorias
-     - `POST /api/auth/login` - Login
-     - `POST /api/orders` - Criar pedido
+   - Use ferramentas como Postman, Insomnia ou MongoDB compass
+   - 📡 Endpoints Principais:
+     
+| Método   | Rota                  | Descrição                |
+| -------- | --------------------- | ------------------------ |
+| `POST`   | `/api/auth/register`  | Cadastrar novo usuário   |
+| `POST`   | `/api/auth/login`     | Login e geração de token |
+| `GET`    | `/api/categories`     | Listar categorias        |
+| `POST`   | `/api/categories`     | Criar categoria          |
+| `PUT`    | `/api/categories/:id` | Atualizar categoria      |
+| `DELETE` | `/api/categories/:id` | Excluir categoria        |
+| `GET`    | `/api/products`       | Listar produtos          |
+| `POST`   | `/api/products`       | Criar produto            |
+| `PUT`    | `/api/products/:id`   | Atualizar produto        |
+| `DELETE` | `/api/products/:id`   | Excluir produto          |
+| `GET`    | `/api/orders`         | Listar pedidos           |
+| `POST`   | `/api/orders`         | Criar pedido             |
+
+
+**📊 Painel Administrativo**
+- Dashboard com métricas e estatísticas
+- CRUD de produtos, categorias e banners 
+- Gerenciamento de pedidos e usuários
+- Upload de imagens
+- Controle de permissões
 
 ## Estrutura de Dados
 
@@ -329,29 +333,9 @@ npm run build   # Testar build de produção
 - Relacionamento: N PedidoItens → 1 Item
 - Campos: quantidade, precoUnitario
 
-## Scripts Disponíveis
-
-### Admin e Client
-
-```bash
-npm run dev       # Inicia servidor de desenvolvimento
-npm run build     # Cria build de produção
-npm run preview   # Preview do build de produção
-npm run lint      # Executa verificação de código
-```
-
-### Backend
-
-```bash
-mvnw.cmd spring-boot:run    # Executa a aplicação
-mvnw.cmd clean install      # Compila e instala dependências
-mvnw.cmd test               # Executa testes
-mvnw.cmd clean package      # Gera arquivo JAR
-```
-
 ## Funcionalidades Principais
 
-### Painel Administrativo
+### 📊 Painel Administrativo
 - Dashboard com métricas e estatísticas
 - CRUD completo de produtos e categorias
 - Gerenciamento de banners promocionais
@@ -359,7 +343,7 @@ mvnw.cmd clean package      # Gera arquivo JAR
 - Gerenciamento de usuários e permissões
 - Upload de imagens e logotipos
 
-### Interface do Cliente
+🛍️ ### Aplicação Cliente
 - Navegação por categorias
 - Busca de produtos
 - Carrossel de banners promocionais
@@ -369,73 +353,38 @@ mvnw.cmd clean package      # Gera arquivo JAR
 - Finalização de pedidos
 - Tema claro/escuro
 
-### API Backend
-- Autenticação JWT e OAuth2
-- Controle de acesso baseado em roles
-- CRUD de entidades
-- Relacionamentos JPA complexos
-- Herança de entidades (User → Cliente/Admin/Gerente)
-- Validações e tratamento de erros
+🧠 ### API Backend
 
-## Build para Produção
+- Autenticação JWT segura com expiração de token
+- Controle de acesso baseado em roles (usuário comum / admin)
+- CRUD completo para categorias, produtos, usuários e pedidos
+- Relacionamentos MongoDB (via Mongoose populate)
+- Upload de imagens com multer (armazenamento local ou remoto)
+- Validações de entrada e tratamento centralizado de erros
+- Estrutura modular com separação clara de controllers, models e routes
+- Conexão automática com MongoDB Atlas
+- Endpoints RESTful com respostas padronizadas
+- Compatível com o cliente e painel admin WeFood (React + Vite)
 
-### Frontend (Admin e Client)
+🖼️ ### Upload de Imagens:
 
-```bash
-npm run build
-```
+- As imagens são enviadas via multipart/form-data
+- Armazenadas localmente em backend/uploads
+- Servidas automaticamente em /uploads/<nome-do-arquivo>
 
-Os arquivos otimizados estarão na pasta `dist/` e podem ser servidos por qualquer servidor web (Nginx, Apache, etc.).
+👤 Usuários e Roles:
 
-### Backend
+| Tipo                   | Permissões                                 |
+| ---------------------- | ------------------------------------------ |
+| **Usuário comum**      | Criar pedidos, editar perfil, ver produtos |
+| **Admin**              | Gerenciar categorias, produtos e pedidos   |
+| **Gerente (opcional)** | Controle total + relatórios futuros        |
 
-```bash
-mvnw.cmd clean package
-```
+🧩### Deploy:
 
-O arquivo JAR será gerado em `target/Backend-0.0.1-SNAPSHOT.jar` e pode ser executado com:
+| Serviço           | Função                            |
+| ----------------- | --------------------------------- |
+| **Vercel**        | Hospeda o painel admin e o client |
+| **Render**        | Hospeda a API Node.js             |
+| **MongoDB Atlas** | Banco de dados em nuvem           |
 
-```bash
-java -jar target/Backend-0.0.1-SNAPSHOT.jar
-```
-
-## Variáveis de Ambiente
-
-Para produção, configure as seguintes variáveis:
-
-### Backend
-```properties
-SPRING_DATASOURCE_URL=jdbc:postgresql://seu-host:5432/wefood
-SPRING_DATASOURCE_USERNAME=usuario
-SPRING_DATASOURCE_PASSWORD=senha
-SERVER_PORT=8080
-JWT_SECRET=sua_chave_secreta
-```
-
-### Frontend
-Configure os endpoints da API nos arquivos de serviço em `src/services/`.
-
-## Solução de Problemas
-
-### Erro de conexão com banco de dados
-- Verifique se o PostgreSQL está rodando
-- Confirme as credenciais em `application.properties`
-- Verifique se o banco de dados foi criado
-
-### Porta já em uso
-- Backend: Altere `server.port` em `application.properties`
-- Frontend: O Vite sugerirá automaticamente outra porta
-
-### Dependências não instaladas
-```bash
-# Frontend
-rm -rf node_modules package-lock.json
-npm install
-
-# Backend
-mvnw.cmd clean install -U
-```
-
-## Licença
-
-Este projeto é de propriedade privada. Todos os direitos reservados.
