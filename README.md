@@ -298,7 +298,7 @@ npm run build   # Testar build de produção
 | `POST`   | `/api/orders`         | Criar pedido             |
 
 
-**📊 Painel Administrativo**
+📊 **Painel Administrativo**
 - Dashboard com métricas e estatísticas
 - CRUD de produtos, categorias e banners 
 - Gerenciamento de pedidos e usuários
@@ -343,7 +343,7 @@ npm run build   # Testar build de produção
 - Gerenciamento de usuários e permissões
 - Upload de imagens e logotipos
 
-🛍️ ### Aplicação Cliente
+### 🛍️ Aplicação Cliente
 - Navegação por categorias
 - Busca de produtos
 - Carrossel de banners promocionais
@@ -353,7 +353,7 @@ npm run build   # Testar build de produção
 - Finalização de pedidos
 - Tema claro/escuro
 
-🧠 ### API Backend
+### 🧠 API Backend
 
 - Autenticação JWT segura com expiração de token
 - Controle de acesso baseado em roles (usuário comum / admin)
@@ -366,7 +366,7 @@ npm run build   # Testar build de produção
 - Endpoints RESTful com respostas padronizadas
 - Compatível com o cliente e painel admin WeFood (React + Vite)
 
-🖼️ ### Upload de Imagens:
+### 🖼️ Upload de Imagens:
 
 - As imagens são enviadas via multipart/form-data
 - Armazenadas localmente em backend/uploads
@@ -380,7 +380,7 @@ npm run build   # Testar build de produção
 | **Admin**              | Gerenciar categorias, produtos e pedidos   |
 | **Gerente (opcional)** | Controle total + relatórios futuros        |
 
-🧩### Deploy:
+### 🧩 Deploy:
 
 | Serviço           | Função                            |
 | ----------------- | --------------------------------- |
