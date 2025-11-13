@@ -11,14 +11,10 @@ const handleError = (err, endpoint) => {
 
 /**
  * GET genérico
- * @param {string} endpoint
- * @param {object} params
- * @param {string} token opcional
  */
-export const fetchData = async (endpoint, params = {}, token) => {
+export const fetchData = async (endpoint, params = {}) => {
   try {
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const { data } = await api.get(endpoint, { params, headers });
+    const { data } = await api.get(endpoint, { params });
     return data;
   } catch (err) {
     return handleError(err, endpoint);
@@ -28,10 +24,9 @@ export const fetchData = async (endpoint, params = {}, token) => {
 /**
  * POST genérico
  */
-export const postData = async (endpoint, body, token) => {
+export const postData = async (endpoint, body = {}) => {
   try {
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const { data } = await api.post(endpoint, body, { headers });
+    const { data } = await api.post(endpoint, body);
     return data;
   } catch (err) {
     return handleError(err, endpoint);
@@ -41,10 +36,9 @@ export const postData = async (endpoint, body, token) => {
 /**
  * PUT genérico
  */
-export const putData = async (endpoint, body, token) => {
+export const putData = async (endpoint, body = {}) => {
   try {
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const { data } = await api.put(endpoint, body, { headers });
+    const { data } = await api.put(endpoint, body);
     return data;
   } catch (err) {
     return handleError(err, endpoint);
@@ -54,10 +48,9 @@ export const putData = async (endpoint, body, token) => {
 /**
  * DELETE genérico
  */
-export const deleteData = async (endpoint, token) => {
+export const deleteData = async (endpoint) => {
   try {
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const { data } = await api.delete(endpoint, { headers });
+    const { data } = await api.delete(endpoint);
     return data;
   } catch (err) {
     return handleError(err, endpoint);

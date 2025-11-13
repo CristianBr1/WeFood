@@ -3,18 +3,27 @@ import { uploadFormData } from "../uploadService";
 
 export const StoreManageService = {
   // 🔹 Buscar dados da loja (nome + logo)
-  getStore: () => fetchData("/store"),
+  getStore: async () => {
+    const data = await fetchData("/store");
+    return data || {};
+  },
 
   // 🔹 Atualizar dados da loja (nome e logo)
-  updateStore: (name, logoFile) =>
-    uploadFormData({
+  updateStore: async (name, logoFile) => {
+    if (!name && !logoFile)
+      throw new Error("Informe pelo menos o nome ou o logo.");
+
+    return uploadFormData({
       endpoint: "/store",
       fields: { name },
-      file: logoFile,
+      file: logoFile || null,
       fileKey: "logo",
-      method: "POST", // ou PUT se preferir
-    }),
+      method: "POST", // pode ser PUT dependendo da sua rota
+    });
+  },
 
   // 🔹 Deletar logo
-  deleteLogo: () => deleteData("/store/logo"),
+  deleteLogo: async () => {
+    return deleteData("/store/logo");
+  },
 };

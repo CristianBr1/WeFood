@@ -5,9 +5,7 @@ import { useAuthContext } from "../hooks/useAuthContext";
 export const CartContext = createContext(null);
 
 const CartProvider = ({ children }) => {
-  const { user } = useAuthContext();
-  const token = user?.token;
-
+  const { user } = useAuthContext(); // ainda útil pra saber se o usuário existe
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [opLoading, setOpLoading] = useState(false);
@@ -15,16 +13,18 @@ const CartProvider = ({ children }) => {
 
   /** 🔹 Buscar carrinho */
   const refreshCart = useCallback(async (silent = false) => {
-    if (!token) {
+    if (!user) {
       setCart([]);
       if (!silent) setLoading(false);
       return;
     }
+
     if (!silent) setLoading(true);
     setError(null);
 
     try {
-      const data = await CartService.fetchCart(token);
+      // ✅ não precisa passar token — o cookie HTTP-only faz isso
+      const data = await CartService.fetchCart();
       setCart(data);
     } catch (err) {
       console.error("Erro ao buscar carrinho:", err);
@@ -33,15 +33,15 @@ const CartProvider = ({ children }) => {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [token]);
+  }, [user]);
 
   /** 🔹 Adicionar item */
   const addItem = useCallback(async (item) => {
-    if (!token) return alert("Você precisa estar logado para adicionar itens!");
+    if (!user) return alert("Você precisa estar logado para adicionar itens!");
     setOpLoading(true);
 
     try {
-      await CartService.addItem(item, token);
+      await CartService.addItem(item);
       await refreshCart(true);
     } catch (err) {
       console.error("Erro ao adicionar item:", err);
@@ -49,15 +49,15 @@ const CartProvider = ({ children }) => {
     } finally {
       setOpLoading(false);
     }
-  }, [token, refreshCart]);
+  }, [user, refreshCart]);
 
   /** 🔹 Atualizar item */
   const updateItem = useCallback(async (cartItemId, item) => {
-    if (!token) return;
+    if (!user) return;
     setOpLoading(true);
 
     try {
-      await CartService.updateItem(cartItemId, item, token);
+      await CartService.updateItem(cartItemId, item);
       await refreshCart(true);
     } catch (err) {
       console.error("Erro ao atualizar item:", err);
@@ -65,15 +65,15 @@ const CartProvider = ({ children }) => {
     } finally {
       setOpLoading(false);
     }
-  }, [token, refreshCart]);
+  }, [user, refreshCart]);
 
   /** 🔹 Remover item */
   const removeItem = useCallback(async (cartItemId) => {
-    if (!token) return;
+    if (!user) return;
     setOpLoading(true);
 
     try {
-      await CartService.removeItem(cartItemId, token);
+      await CartService.removeItem(cartItemId);
       await refreshCart(true);
     } catch (err) {
       console.error("Erro ao remover item:", err);
@@ -81,15 +81,15 @@ const CartProvider = ({ children }) => {
     } finally {
       setOpLoading(false);
     }
-  }, [token, refreshCart]);
+  }, [user, refreshCart]);
 
   /** 🔹 Limpar carrinho */
   const clearCart = useCallback(async () => {
-    if (!token) return;
+    if (!user) return;
     setOpLoading(true);
 
     try {
-      await CartService.clearCart(token);
+      await CartService.clearCart();
       setCart([]);
     } catch (err) {
       console.error("Erro ao limpar carrinho:", err);
@@ -97,11 +97,11 @@ const CartProvider = ({ children }) => {
     } finally {
       setOpLoading(false);
     }
-  }, [token]);
+  }, [user]);
 
   useEffect(() => {
     refreshCart();
-  }, [token, refreshCart]);
+  }, [user, refreshCart]);
 
   return (
     <CartContext.Provider

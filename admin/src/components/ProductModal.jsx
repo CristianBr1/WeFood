@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import { ProductService } from "../services/endpoints/product.Service";
 import { Button, TextField, Select, MenuItem, IconButton, FormControlLabel, Checkbox, Box, Typography } from "@mui/material";
 import { AiOutlinePlus, AiOutlineMinus } from "react-icons/ai";

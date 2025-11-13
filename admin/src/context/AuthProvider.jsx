@@ -1,56 +1,47 @@
-import { useState, useEffect } from "react";
-import AuthContext from "./AuthContext";
-import {
-  login as loginService,
-  logout as logoutService,
-} from "../services/authService";
+import { createContext, useState, useEffect } from "react";
+import { AuthService } from "../services/AuthService";
 import Loading from "../components/Loading";
 
-const AuthProvider = ({ children }) => {
+export const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+  // ✅ Checa sessão no backend ao carregar o app
+  const checkSession = async () => {
+    setLoading(true);
+    const currentUser = await AuthService.getProfile();
+    setUser(currentUser);
     setLoading(false);
+  };
+
+  useEffect(() => {
+    checkSession();
   }, []);
 
+  // 🔹 Login
   const login = async (email, password) => {
-    try {
-      const loggedUser = await loginService(email, password);
-      setUser(loggedUser);
-      localStorage.setItem("user", JSON.stringify(loggedUser));
-      return loggedUser;
-    } catch (err) {
-      console.error("Erro no login:", err.message);
-      return null;
-    }
+    const loggedUser = await AuthService.login(email, password);
+    setUser(loggedUser);
+    return loggedUser;
   };
 
+  // 🔹 Logout
   const logout = async () => {
-    try {
-      await logoutService();
-    } finally {
-      setUser(null);
-      localStorage.removeItem("user");
-    }
+    await AuthService.logout();
+    setUser(null);
   };
 
-  const updateUser = (updatedFields) => {
-    const updatedUser = { ...user, ...updatedFields };
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+  // 🔹 Atualiza campos do usuário no frontend
+  const updateUser = (fields) => {
+    setUser((prev) => ({ ...prev, ...fields }));
   };
 
   if (loading) return <Loading text="Carregando sessão..." />;
 
   return (
-    <AuthContext.Provider
-      value={{ user, login, logout, updateUser, loading, setLoading }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

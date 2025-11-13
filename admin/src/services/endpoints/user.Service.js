@@ -4,8 +4,8 @@ import { uploadFormData } from "../uploadService";
 export const UserService = {
   // Retorna todos os usuários
   getUsers: async () => {
-    const users = await fetchData("/users");
-    return users.map((u) => ({ ...u, _id: u._id.$oid || u._id }));
+    const res = await fetchData("/users");
+    return res.users || [];
   },
 
   // Remove um usuário pelo ID

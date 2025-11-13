@@ -11,7 +11,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 import { useNavigate } from "react-router-dom";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {

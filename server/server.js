@@ -27,6 +27,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+app.use(express.json());
+app.use(cookieParser());
+
 // ---------------------
 // Middlewares
 // ---------------------
@@ -45,14 +48,14 @@ app.use(
 );
 
 
-app.use(express.json());
-app.use(cookieParser());
 app.use(morgan("combined"));
 app.use(
   helmet({
-    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+
 
 // 🔹 Acesso às imagens enviadas
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

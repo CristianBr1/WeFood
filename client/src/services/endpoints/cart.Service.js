@@ -17,23 +17,22 @@ const buildCartPayload = (item) => ({
 });
 
 export const CartService = {
-  /** Buscar carrinho */
-  fetchCart: (token) => fetchData("/cart", {}, token),
+  /** 🔹 Buscar carrinho */
+  fetchCart: () => fetchData("/cart"),
 
-  /** Adicionar item */
-  addItem: (item, token) => postData("/cart", buildCartPayload(item), token),
+  /** 🔹 Adicionar item */
+  addItem: (item) => postData("/cart", buildCartPayload(item)),
 
-  /** Atualizar item */
-  updateItem: (cartItemId, item, token) =>
-    putData(`/cart/${cartItemId}`, buildCartPayload(item), token),
+  /** 🔹 Atualizar item existente */
+  updateItem: (cartItemId, item) =>
+    putData(`/cart/${cartItemId}`, buildCartPayload(item)),
 
-  /** Remover item */
-  removeItem: (cartItemId, token) => deleteData(`/cart/${cartItemId}`, token),
+  /** 🔹 Remover item */
+  removeItem: (cartItemId) => deleteData(`/cart/${cartItemId}`),
 
-  /** Limpar carrinho */
-  clearCart: (token) => deleteData("/cart", token),
+  /** 🔹 Limpar carrinho */
+  clearCart: () => deleteData("/cart"),
 
-  /** Criar pedido (simulação de pagamento) */
-  createOrder: (orderData, token) =>
-    postData("/orders/simulate-payment", orderData, token),
+  /** 🔹 Criar pedido (simulação de pagamento) */
+  createOrder: (orderData) => postData("/orders/simulate-payment", orderData),
 };

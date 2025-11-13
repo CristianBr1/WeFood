@@ -4,41 +4,20 @@ import { fetchData, postData, putData, deleteData } from "../apiService";
  * AddressService
  * ==================== */
 export const AddressService = {
-  /**
-   * Busca todos os endereços
-   * @param {string} token
-   */
-  getAddresses: (token) => fetchData("/addresses", {}, token),
+  createAddress: (data) => postData("/addresses", data),
+  /** 🔹 Buscar todos os endereços */
+  getAddresses: () => fetchData("/addresses"),
 
-  /**
-   * Busca um endereço específico
-   * @param {string} addressId
-   * @param {string} token
-   */
-  getAddressById: (addressId, token) =>
-    fetchData(`/addresses/${addressId}`, {}, token),
+  /** 🔹 Buscar endereço específico */
+  getAddressById: (addressId) => fetchData(`/addresses/${addressId}`),
 
-  /**
-   * Adiciona um novo endereço
-   * @param {object} address
-   * @param {string} token
-   */
-  addAddress: (address, token) => postData("/addresses", address, token),
+  /** 🔹 Adicionar novo endereço */
+  addAddress: (address) => postData("/addresses", address),
 
-  /**
-   * Atualiza um endereço
-   * @param {string} addressId
-   * @param {object} address
-   * @param {string} token
-   */
-  updateAddress: (addressId, address, token) =>
-    putData(`/addresses/${addressId}`, address, token),
+  /** 🔹 Atualizar endereço existente */
+  updateAddress: (addressId, address) =>
+    putData(`/addresses/${addressId}`, address),
 
-  /**
-   * Remove um endereço
-   * @param {string} addressId
-   * @param {string} token
-   */
-  removeAddress: (addressId, token) =>
-    deleteData(`/addresses/${addressId}`, token),
+  /** 🔹 Remover endereço */
+  removeAddress: (addressId) => deleteData(`/addresses/${addressId}`),
 };

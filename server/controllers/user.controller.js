@@ -1,21 +1,36 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
-// 🔑 Gera JWT
+/** =====================================
+ * 🔑 Gera JWT
+ * ===================================== */
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// ========================================
-// 📌 Registrar usuário
-// ========================================
+/** =====================================
+ * ⚙️ Opções do cookie seguro
+ * ===================================== */
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: "/",
+};
+
+/** =====================================
+ * 🧾 Registrar usuário
+ * ===================================== */
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, avatar, mobile } = req.body;
 
     if (!name || !email || !password)
-      return res.status(400).json({ message: "Preencha todos os campos." });
+      return res
+        .status(400)
+        .json({ message: "Preencha todos os campos obrigatórios." });
 
     const userExists = await User.findOne({ email });
     if (userExists)
@@ -24,177 +39,156 @@ export const registerUser = async (req, res) => {
     const user = await User.create({ name, email, password, avatar, mobile });
     const token = generateToken(user._id);
 
-    res.status(201).json({ user: user.toJSON(), token });
+    res.status(201).cookie("token", token, cookieOptions).json({
+      success: true,
+      user: user.toJSON(),
+      message: "Registro concluído com sucesso.",
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
+    console.error("Erro no registro:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
   }
 };
 
-// ========================================
-// 📌 Login usuário
-// ========================================
+/** =====================================
+ * 🔐 Login
+ * ===================================== */
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-      return res.status(400).json({ message: "Preencha todos os campos." });
+      return res
+        .status(400)
+        .json({ message: "Preencha todos os campos obrigatórios." });
 
     const user = await User.findOne({ email }).select("+password");
-    if (!user) return res.status(401).json({ message: "Credenciais inválidas." });
+    if (!user)
+      return res.status(401).json({ message: "Credenciais inválidas." });
 
     const isMatch = await user.matchPassword(password);
-    if (!isMatch) return res.status(401).json({ message: "Credenciais inválidas." });
+    if (!isMatch)
+      return res.status(401).json({ message: "Credenciais inválidas." });
 
     await user.updateLastLogin();
 
     const token = generateToken(user._id);
-    res.json({ user: user.toJSON(), token });
+    res.cookie("token", token, cookieOptions).json({
+      success: true,
+      user: user.toJSON(),
+      message: "Login realizado com sucesso.",
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
+    console.error("Erro no login:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
   }
 };
 
-// ========================================
-// 📌 Logout
-// ========================================
+/** =====================================
+ * 🚪 Logout
+ * ===================================== */
 export const logoutUser = async (req, res) => {
   try {
-    const userId = req.user._id;
-    await User.findByIdAndUpdate(userId, { refresh_token: "" });
-    res.json({ message: "Logout realizado com sucesso." });
+    res.clearCookie("token", { ...cookieOptions, maxAge: 0 });
+    res.json({ success: true, message: "Logout realizado com sucesso." });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
+    console.error("Erro no logout:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
   }
 };
 
-// ========================================
-// 📌 Obter perfil do usuário
-// ========================================
+/** =====================================
+ * 👤 Obter perfil
+ * ===================================== */
 export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
-    res.json({ user: user.toJSON() });
+    if (!user)
+      return res.status(404).json({ message: "Usuário não encontrado." });
+
+    res.json({ success: true, user: user.toJSON() });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
+    console.error("Erro ao obter perfil:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
   }
 };
 
-// ========================================
-// 📌 Listar todos usuários (ADMIN)
-// ========================================
+/** =====================================
+ * ✏️ Atualizar perfil
+ * ===================================== */
+export const updateUserProfile = async (req, res) => {
+  try {
+    const updates = (({ name, mobile, email }) => ({ name, mobile, email }))(
+      req.body
+    );
+    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+      new: true,
+    });
+
+    if (!user)
+      return res.status(404).json({ message: "Usuário não encontrado." });
+
+    res.json({
+      success: true,
+      user: user.toJSON(),
+      message: "Perfil atualizado com sucesso.",
+    });
+  } catch (err) {
+    console.error("Erro ao atualizar perfil:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
+/** =====================================
+ * 🖼️ Atualizar avatar
+ * ===================================== */
+export const updateUserAvatar = async (req, res) => {
+  try {
+    const { avatar } = req.body;
+    if (!avatar)
+      return res.status(400).json({ message: "Avatar é obrigatório." });
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      user: user.toJSON(),
+      message: "Avatar atualizado com sucesso.",
+    });
+  } catch (err) {
+    console.error("Erro ao atualizar avatar:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
+/** =====================================
+ * 📋 Listar todos os usuários (Admin)
+ * ===================================== */
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({});
-    res.json(users.map(u => u.toJSON()));
+    const users = await User.find().sort({ createdAt: -1 });
+    res.json({ success: true, users });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
+    console.error("Erro ao listar usuários:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
   }
 };
 
-// ========================================
-// 📌 Deletar usuário (ADMIN)
-// ========================================
+/** =====================================
+ * ❌ Deletar usuário (Admin)
+ * ===================================== */
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
-    res.json({ message: "Usuário deletado com sucesso." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
-  }
-};
-
-// ========================================
-// 📌 Enviar OTP para reset de senha
-// ========================================
-export const sendResetPasswordOTP = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Informe o e-mail." });
-
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
-
-    const otp = crypto.randomInt(100000, 999999).toString();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
-
-    user.forgot_password_otp = otp;
-    user.forgot_password_expiry = expiry;
-    await user.save();
-
-    console.log(`OTP para ${email}: ${otp}`);
-    res.json({ message: "OTP enviado para o e-mail." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
-  }
-};
-
-// ========================================
-// 📌 Resetar senha usando OTP
-// ========================================
-export const resetPassword = async (req, res) => {
-  try {
-    const { email, otp, newPassword } = req.body;
-    if (!email || !otp || !newPassword)
-      return res.status(400).json({ message: "Todos os campos são obrigatórios." });
-
-    const user = await User.findOne({ email }).select("+password");
-    if (!user) return res.status(404).json({ message: "Usuário não encontrado." });
-
-    if (user.forgot_password_otp !== otp)
-      return res.status(400).json({ message: "OTP inválido." });
-
-    if (new Date() > user.forgot_password_expiry)
-      return res.status(400).json({ message: "OTP expirado." });
-
-    user.password = newPassword;
-    user.forgot_password_otp = null;
-    user.forgot_password_expiry = null;
-    await user.save();
-
-    res.json({ message: "Senha alterada com sucesso." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro no servidor." });
-  }
-};
-
-// ========================================
-// 📌 Atualizar avatar do usuário
-// ========================================
-export const updateUserAvatar = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { avatar } = req.body;
-
-    if (!avatar) {
-      return res.status(400).json({ message: "A URL do avatar é obrigatória." });
-    }
-
-    const user = await User.findByIdAndUpdate(
-      id,
-      { avatar },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
+    if (!user)
       return res.status(404).json({ message: "Usuário não encontrado." });
-    }
 
-    res.status(200).json({
-      message: "Avatar atualizado com sucesso!",
-      user: user.toJSON(),
-    });
-  } catch (error) {
-    console.error("Erro ao atualizar avatar:", error);
-    res.status(500).json({ message: "Erro ao atualizar avatar." });
+    res.json({ success: true, message: "Usuário deletado com sucesso." });
+  } catch (err) {
+    console.error("Erro ao deletar usuário:", err);
+    res.status(500).json({ message: "Erro interno do servidor." });
   }
 };

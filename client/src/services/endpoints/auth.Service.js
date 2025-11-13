@@ -1,45 +1,64 @@
-import api from "../api";
+import { fetchData, postData } from "../apiService";
 
-const handleError = (err, endpoint) => {
-  const message = err.response?.data?.message || err.message || err;
-  console.error(`Erro no ${endpoint}:`, message);
-  throw err;
-};
-
+/** =====================================
+ * 🔐 AuthService — autenticação via cookies httpOnly
+ * ===================================== */
 export const AuthService = {
-  login: async (email, password) => {
-    try {
-      const res = await api.post("/auth/login", {
-        email: email.trim().toLowerCase(),
-        password: password.trim(),
-      });
-      if (res.data?.user && res.data?.token) return res.data;
-      throw new Error("Login falhou");
-    } catch (err) {
-      handleError(err, "login");
-    }
-  },
-
+  /**
+   * 🔹 Registrar novo usuário
+   * @param {string} name
+   * @param {string} email
+   * @param {string} password
+   */
   register: async (name, email, password) => {
-    try {
-      const res = await api.post("/auth/register", {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password: password.trim(),
-      });
-      if (res.data?.user && res.data?.token) return res.data;
-      throw new Error("Registro falhou");
-    } catch (err) {
-      handleError(err, "register");
-    }
+    const payload = { name, email, password };
+    return await postData("/auth/register", payload);
   },
 
-  logout: async (token) => {
-    try {
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      await api.post("/auth/logout", {}, { headers });
-    } catch (err) {
-      handleError(err, "logout");
-    }
+  /**
+   * 🔹 Login do usuário
+   * @param {string} email
+   * @param {string} password
+   */
+  login: async (email, password) => {
+    const payload = { email, password };
+    return await postData("/auth/login", payload);
+  },
+
+  /**
+   * 🔹 Logout (limpa cookie httpOnly no servidor)
+   */
+  logout: async () => {
+    return await postData("/auth/logout");
+  },
+
+  /**
+   * 🔹 Obter perfil do usuário logado
+   * (usa cookie httpOnly automaticamente)
+   */
+  getProfile: async () => {
+    return await fetchData("/users/profile");
+  },
+
+  /**
+   * 🔹 Esqueci minha senha — envia OTP por e-mail
+   * @param {string} email
+   */
+  sendResetPasswordOTP: async (email) => {
+    return await postData("/auth/forgot-password", { email });
+  },
+
+  /**
+   * 🔹 Redefinir senha usando OTP
+   * @param {string} email
+   * @param {string} otp
+   * @param {string} newPassword
+   */
+  resetPassword: async (email, otp, newPassword) => {
+    return await postData("/auth/reset-password", {
+      email,
+      otp,
+      newPassword,
+    });
   },
 };

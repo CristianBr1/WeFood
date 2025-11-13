@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -24,25 +24,32 @@ const Login = () => {
     }
   }, [user, loading, navigate]);
 
+  // apenas ajuste no handleSubmit:
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    const loggedUser = await login(email, password);
-    if (!loggedUser) {
-      setError("E-mail ou senha inválidos!");
-      return;
-    }
+    try {
+      const loggedUser = await login(email, password);
+      if (!loggedUser) {
+        setError("E-mail ou senha inválidos!");
+        return;
+      }
 
-    if (loggedUser.role !== "ADMIN") {
-      setError(
-        "Você não tem permissão para acessar o painel de administração!"
-      );
-      return;
+      if (loggedUser.role !== "ADMIN") {
+        setError(
+          "Você não tem permissão para acessar o painel de administração!"
+        );
+        return;
+      }
+
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.message || "Erro ao logar");
     }
   };
 
-  if (loading) return <div>Carregando...</div>; // evita flash de login
+  if (loading) return <div>Carregando...</div>;
 
   const outlinedSx = {
     "& .MuiOutlinedInput-root": {

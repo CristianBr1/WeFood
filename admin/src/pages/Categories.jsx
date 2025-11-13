@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import Button from "@mui/material/Button";
 import CategoryModal from "../components/CategoryModal";
 import { CategoryService } from "../services/endpoints/category.Service";

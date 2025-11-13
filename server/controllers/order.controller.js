@@ -4,16 +4,13 @@ import ProductModel from "../models/Product.model.js";
 import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
-// 🔹 Função auxiliar para gerar orderId legível
+// Gerar orderId legível
 const generateOrderId = () => {
   const now = new Date();
   const date = now.toISOString().slice(0, 10).replace(/-/g, "");
   return `ORD-${date}-${Math.floor(1000 + Math.random() * 9000)}`;
 };
 
-// ============================================================
-// 📦 Criar pedido (simular pagamento)
-// ============================================================
 export const createOrder = async (req, res) => {
   try {
     const {
@@ -22,7 +19,7 @@ export const createOrder = async (req, res) => {
       totalAmt,
       serviceFee,
       deliveryFee,
-      delivery_address,
+      delivery_address, // pode ser ID ou objeto
       pickup,
     } = req.body;
 
@@ -30,42 +27,33 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ error: "Carrinho vazio." });
     }
 
-    const userId = req.user?._id || req.body.userId;
+    const userId = req.user?._id;
     if (!userId) {
       return res.status(401).json({ error: "Usuário não autenticado." });
     }
 
-    // 🔹 Evita duplicação: busca pedido igual criado nos últimos 15s
-    const fifteenSecondsAgo = new Date(Date.now() - 15 * 1000);
-
-    const existingOrder = await OrderModel.findOne({
-      userId,
-      totalAmt,
-      "products.productId": { $in: products.map((p) => p.productId || p._id) },
-      createdAt: { $gte: fifteenSecondsAgo },
-    });
-
-    if (existingOrder) {
-      console.warn(
-        `⚠️ Pedido duplicado detectado para usuário ${userId}: ${existingOrder._id}`
-      );
-      return res
-        .status(409)
-        .json({ message: "Pedido duplicado detectado. Aguarde alguns segundos." });
-    }
-
-    // 🔹 Buscar dados do endereço (se necessário)
     let addressData = null;
+
+    // Se não for retirada, tratar o endereço
     if (!pickup && delivery_address) {
-      addressData = await AddressModel.findById(delivery_address);
-      if (!addressData) {
-        return res
-          .status(404)
-          .json({ error: "Endereço de entrega não encontrado." });
+      if (typeof delivery_address === "string") {
+        // ID de endereço existente
+        addressData = await AddressModel.findById(delivery_address);
+        if (!addressData) {
+          return res
+            .status(404)
+            .json({ error: "Endereço de entrega não encontrado." });
+        }
+      } else if (typeof delivery_address === "object") {
+        // Novo endereço enviado
+        addressData = await AddressModel.create({
+          ...delivery_address,
+          userId,
+        });
       }
     }
 
-    // 🔹 Validar e buscar produtos
+    // Validar produtos
     const populatedProducts = await Promise.all(
       products.map(async (item, index) => {
         const pid = item.productId || item._id;
@@ -76,7 +64,6 @@ export const createOrder = async (req, res) => {
         const product = await ProductModel.findById(pid);
         if (!product) throw new Error(`Produto não encontrado: ${pid}`);
 
-        // 🔹 Recalcula preço total para segurança
         const totalPrice =
           (product.price || 0) * (item.quantity || 1) +
           (item.extras?.reduce((sum, e) => sum + (e.price || 0), 0) || 0);
@@ -95,13 +82,13 @@ export const createOrder = async (req, res) => {
       })
     );
 
-    // 🔹 Gera e salva pedido
+    // Criar pedido
     const orderId = generateOrderId();
     const newOrder = await OrderModel.create({
       userId,
       orderId,
       products: populatedProducts,
-      delivery_address: delivery_address || null,
+      delivery_address: addressData?._id || null,
       pickup: pickup || false,
       subTotalAmt,
       totalAmt,
@@ -123,42 +110,40 @@ export const createOrder = async (req, res) => {
   }
 };
 
-
 // ============================================================
 // 🔍 Buscar todos os pedidos (admin)
 // ============================================================
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await OrderModel.find()
-      .populate("userId", "name email phone") // adiciona telefone
-      .populate("delivery_address") // já pega todos os campos do endereço
-      .sort({ createdAt: 1 });
+      .populate("userId", "name email phone")
+      .populate("delivery_address")
+      .sort({ createdAt: -1 });
 
-    res.status(200).json(orders);
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
   } catch (error) {
     console.error("Erro ao buscar pedidos:", error);
-    res.status(500).json({ error: "Erro interno ao buscar pedidos." });
+    res.status(500).json({
+      success: false,
+      error: "Erro interno ao buscar pedidos.",
+    });
   }
 };
 
-// ============================================================
-// 🧾 Buscar pedidos de um usuário específico
-// ============================================================
+
 export const getUserOrders = async (req, res) => {
   try {
-    const { userId } = req.params;
+    if (!req.user) {
+      console.log("req.user:", req.user);
 
-    // 🔒 Bloqueia acesso de outros usuários
-    if (req.user._id.toString() !== userId && req.userRole !== "ADMIN") {
-      return res.status(403).json({
-        message:
-          "Acesso negado. Você só pode visualizar seus próprios pedidos.",
-        error: true,
-        success: false,
-      });
+      return res.status(401).json({ message: "Usuário não autenticado." });
     }
 
-    const orders = await OrderModel.find({ userId })
+    const orders = await OrderModel.find({ userId: req.user._id })
       .populate("delivery_address")
       .sort({ createdAt: -1 });
 
@@ -168,7 +153,6 @@ export const getUserOrders = async (req, res) => {
     res.status(500).json({ error: "Erro interno ao buscar pedidos." });
   }
 };
-
 
 // 🔁 Atualizar status do pedido (apenas admin)
 export const updateOrderStatus = async (req, res) => {
@@ -199,7 +183,6 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ error: "Erro interno ao atualizar pedido." });
   }
 };
-
 
 // ============================================================
 // 🗑️ Excluir pedido (opcional — admin)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import { Typography, Button } from "@mui/material";
 import Loading from "../components/Loading";
 import { UserService } from "../services/endpoints/user.Service";
@@ -16,10 +16,7 @@ const Users = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
 
   // 🔹 Função segura para pegar o ID
-  const getId = (u) => {
-    if (!u._id) return undefined;
-    return typeof u._id === "string" ? u._id : u._id.$oid;
-  };
+  const getId = (u) => u._id || u.id;
 
   // 🔹 Carregar usuários
   useEffect(() => {
@@ -27,13 +24,15 @@ const Users = () => {
       try {
         setLoading(true);
         const data = await UserService.getUsers();
-        setUsers(data);
+        setUsers(data || []);
       } catch (err) {
+        console.error("Erro ao buscar usuários:", err);
         setError(err.message || "Erro ao carregar usuários");
       } finally {
         setLoading(false);
       }
     };
+
     fetchUsersData();
   }, []);
 
@@ -57,35 +56,47 @@ const Users = () => {
   if (loading) return <Loading text="Carregando usuários..." />;
 
   return (
-    <div className={`p-6 rounded-md shadow-md ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
+    <div
+      className={`p-6 rounded-md shadow-md ${
+        darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
+      }`}
+    >
       <h2 className="text-2xl font-bold mb-4">Usuários Cadastrados</h2>
 
       {error && <p className="text-red-500 mb-2">{error}</p>}
 
       {users.length === 0 ? (
-        <Typography color="textSecondary">Nenhum usuário encontrado.</Typography>
+        <Typography color="textSecondary">
+          Nenhum usuário encontrado.
+        </Typography>
       ) : (
         <div className="flex flex-col gap-4">
           {users.map((u, index) => (
             <div
-              key={getId(u)} // chave única segura
+              key={getId(u)}
               className={`flex flex-col md:flex-row items-start md:items-center justify-between p-4 rounded-lg shadow cursor-pointer ${
-                darkMode ? "bg-gray-800 hover:bg-gray-700" : "bg-gray-100 hover:bg-gray-200"
+                darkMode
+                  ? "bg-gray-800 hover:bg-gray-700"
+                  : "bg-gray-100 hover:bg-gray-200"
               }`}
               onClick={() => handleView(u)}
             >
               <div className="flex items-center gap-4">
                 {/* Avatar ou inicial */}
                 <div className="w-16 h-16 bg-gray-300 rounded flex items-center justify-center text-xl font-bold">
-                  {u.name[0]?.toUpperCase()}
+                  {u.name?.[0]?.toUpperCase() || "?"}
                 </div>
 
                 {/* Info do usuário */}
                 <div className="flex flex-col">
-                  <p className="font-semibold">{index + 1}. {u.name}</p>
-                  <p className="text-sm">{u.email}</p>
-                  <p className="text-sm font-medium">{u.role}</p>
-                  <p className="text-sm">{u.status}</p>
+                  <p className="font-semibold">
+                    {index + 1}. {u.name || "Sem nome"}
+                  </p>
+                  <p className="text-sm">{u.email || "Sem email"}</p>
+                  <p className="text-sm font-medium">
+                    {u.role || "Sem função"}
+                  </p>
+                  <p className="text-sm">{u.status || "Ativo"}</p>
                 </div>
               </div>
 
@@ -94,7 +105,10 @@ const Users = () => {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={(e) => { e.stopPropagation(); handleView(u); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleView(u);
+                  }}
                 >
                   Visualizar
                 </Button>
@@ -102,7 +116,10 @@ const Users = () => {
                   variant="contained"
                   size="small"
                   color="error"
-                  onClick={(e) => { e.stopPropagation(); handleDelete(getId(u)); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(getId(u));
+                  }}
                 >
                   Excluir
                 </Button>
@@ -115,13 +132,33 @@ const Users = () => {
       {/* Modal de visualização */}
       {viewModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`bg-white p-6 rounded-lg w-96 ${darkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
+          <div
+            className={`p-6 rounded-lg w-96 ${
+              darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+            }`}
+          >
             <h3 className="text-xl font-bold mb-2">Detalhes do Usuário</h3>
-            <p><strong>Nome:</strong> {selectedUser.name}</p>
-            <p><strong>Email:</strong> {selectedUser.email}</p>
-            <p><strong>Role:</strong> {selectedUser.role}</p>
-            <p><strong>Status:</strong> {selectedUser.status}</p>
-            <p><strong>Último login:</strong> {selectedUser.last_login_date ? new Date(selectedUser.last_login_date.$date).toLocaleString() : "Nunca"}</p>
+            <p>
+              <strong>Nome:</strong> {selectedUser.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {selectedUser.email}
+            </p>
+            <p>
+              <strong>Role:</strong> {selectedUser.role}
+            </p>
+            <p>
+              <strong>Status:</strong> {selectedUser.status}
+            </p>
+            <p>
+              <strong>Último login:</strong>{" "}
+              {selectedUser.last_login_date
+                ? new Date(
+                    selectedUser.last_login_date.$date ||
+                      selectedUser.last_login_date
+                  ).toLocaleString()
+                : "Nunca"}
+            </p>
             <div className="mt-4 flex justify-end gap-2">
               <Button onClick={() => setViewModalOpen(false)}>Fechar</Button>
             </div>

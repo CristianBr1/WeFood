@@ -1,83 +1,53 @@
 import { useState, useEffect, useContext } from "react";
-import { Box, Button, Typography, Divider, Checkbox, Modal } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  Divider,
+  Checkbox,
+  Modal,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useCartContext } from "../hooks/useCartContext";
-import { useAuthContext } from "../hooks/useAuthContext";
 import { ThemeContext } from "../context/ThemeProvider";
-import { AddressService } from "../services/endpoints/address.Service";
-import { CartService } from "../services/endpoints/cart.Service";
-import { calculateDeliveryFees } from "../config/fees.config";
+import { useCartContext } from "../hooks/useCartContext";
+import { useAddressContext } from "../hooks/useAddressContext";
+import { useAuthContext } from "../context/AuthProvider";
 import AddressForm from "../components/AddressForm";
 import Loading from "../components/Loading";
+import { calculateDeliveryFees } from "../config/fees.config";
+import { CartService } from "../services/endpoints/cart.Service";
 
 const Checkout = () => {
   const { darkMode } = useContext(ThemeContext);
   const { cart, clearCart, refreshCart } = useCartContext();
-  const { user } = useAuthContext();
-  const navigate = useNavigate();
+  const { selectedAddress, setSelectedAddress, addresses } =
+    useAddressContext();
+  const { user, loading: authLoading } = useAuthContext();
 
-  const [addresses, setAddresses] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(null);
+  const navigate = useNavigate();
   const [pickup, setPickup] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [addressModalOpen, setAddressModalOpen] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
   const { serviceFee, deliveryFee } = calculateDeliveryFees(pickup);
-  const total = subtotal + serviceFee + deliveryFee;
+  const total = subtotal + serviceFee + (pickup ? 0 : deliveryFee);
 
-  /** 🔹 Carregar endereços */
+  // 🔹 Redireciona para login apenas se authLoading terminou
   useEffect(() => {
-    const fetchAddresses = async () => {
-      if (!user?.token) return;
-      try {
-        const data = await AddressService.getAddresses(user.token);
-        setAddresses(data);
-        if (data.length > 0) setSelectedAddress(data[0]);
-      } catch (err) {
-        console.error("Erro ao buscar endereços:", err);
-      }
-    };
-    fetchAddresses();
-  }, [user?.token]);
+    if (!authLoading && !user) navigate("/login");
+  }, [authLoading, user, navigate]);
 
-  /** 🔹 Garantir carrinho atualizado */
+  // 🔹 Garantir carrinho atualizado
   useEffect(() => {
     if (refreshCart) refreshCart({ silent: true });
   }, [refreshCart]);
 
-  /** 🔹 Salvar endereço via AddressForm */
-  const handleSaveAddress = async (newAddress) => {
-    setAddressModalOpen(false);
-    try {
-      let savedAddress;
-      if (newAddress._id) {
-        savedAddress = await AddressService.updateAddress(newAddress._id, newAddress, user.token);
-      } else {
-        savedAddress = await AddressService.addAddress(newAddress, user.token);
-      }
-      setSelectedAddress(savedAddress);
-
-      // Atualiza a lista local
-      setAddresses((prev) => {
-        const exists = prev.find((a) => a._id === savedAddress._id);
-        if (exists) {
-          return prev.map((a) => (a._id === savedAddress._id ? savedAddress : a));
-        } else {
-          return [...prev, savedAddress];
-        }
-      });
-    } catch (err) {
-      console.error("Erro ao salvar endereço:", err);
-      alert("Erro ao salvar endereço");
-    }
-  };
-
-  /** 🔹 Simula pagamento e cria pedido */
   const handleSimulatePayment = async () => {
     if (!cart.length) return alert("Seu carrinho está vazio");
     if (!user?._id) return navigate("/login");
-    if (!pickup && !selectedAddress?._id) return alert("Selecione um endereço ou marque Retirar no local");
+    if (!pickup && !selectedAddress?._id)
+      return alert("Selecione um endereço ou marque Retirar no local");
 
     const orderData = {
       userId: user._id,
@@ -99,9 +69,9 @@ const Checkout = () => {
 
     try {
       setProcessing(true);
-      await CartService.createOrder(orderData); // vai para collection orders
+      await CartService.createOrder(orderData);
       alert("Pedido criado com sucesso!");
-      await clearCart(); // limpa cartProducts
+      await clearCart();
       navigate("/");
     } catch (err) {
       console.error(err);
@@ -111,7 +81,7 @@ const Checkout = () => {
     }
   };
 
-  if (!cart) return <Loading text="Carregando seu carrinho..." />;
+  if (authLoading || !user || !cart) return <Loading text="Carregando..." />;
 
   return (
     <Box
@@ -127,19 +97,44 @@ const Checkout = () => {
         Checkout
       </Typography>
 
-      <Box sx={{ maxWidth: 800, mx: "auto", display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{
+          maxWidth: 800,
+          mx: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+        }}
+      >
         {/* Produtos */}
-        <Box sx={{ p: 2, backgroundColor: darkMode ? "#222" : "#fff", borderRadius: 2 }}>
+        <Box
+          sx={{
+            p: 2,
+            backgroundColor: darkMode ? "#222" : "#fff",
+            borderRadius: 2,
+          }}
+        >
           <Typography variant="h6">Produtos</Typography>
           <Divider sx={{ my: 1 }} />
           {cart.map((item) => (
-            <Box key={item.cartItemId || item._id} sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+            <Box
+              key={item.cartItemId || item._id}
+              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+            >
               <Box>
-                <Typography>{item.name} x {item.quantity}</Typography>
+                <Typography>
+                  {item.name} x {item.quantity}
+                </Typography>
                 {item.extras?.length > 0 && (
-                  <Typography variant="body2">Extras: {item.extras.map((e) => e.name).join(", ")}</Typography>
+                  <Typography variant="body2">
+                    Extras: {item.extras.map((e) => e.name).join(", ")}
+                  </Typography>
                 )}
-                {item.observations && <Typography variant="body2">Obs: {item.observations}</Typography>}
+                {item.observations && (
+                  <Typography variant="body2">
+                    Obs: {item.observations}
+                  </Typography>
+                )}
               </Box>
               <Typography>R$ {item.totalPrice?.toFixed(2)}</Typography>
             </Box>
@@ -147,17 +142,25 @@ const Checkout = () => {
         </Box>
 
         {/* Endereço */}
-        <Box sx={{ p: 2, backgroundColor: darkMode ? "#222" : "#fff", borderRadius: 2 }}>
+        <Box
+          sx={{
+            p: 2,
+            backgroundColor: darkMode ? "#222" : "#fff",
+            borderRadius: 2,
+          }}
+        >
           <Typography variant="h6">Endereço de entrega</Typography>
           <Divider sx={{ my: 1 }} />
-
           {addresses.length > 0 ? (
             addresses.map((addr) => (
               <Box
                 key={addr._id}
                 sx={{
                   p: 1,
-                  border: selectedAddress?._id === addr._id ? "2px solid #16a34a" : "1px solid #ddd",
+                  border:
+                    selectedAddress?._id === addr._id
+                      ? "2px solid #16a34a"
+                      : "1px solid #ddd",
                   borderRadius: 1,
                   display: "flex",
                   justifyContent: "space-between",
@@ -165,33 +168,56 @@ const Checkout = () => {
                   mb: 1,
                   cursor: "pointer",
                 }}
-                onClick={() => { setSelectedAddress(addr); setPickup(false); }}
+                onClick={() => {
+                  setSelectedAddress(addr);
+                  setPickup(false);
+                }}
               >
-                <Typography>{addr.address_line} - {addr.city}, {addr.state} - CEP: {addr.pincode}</Typography>
+                <Typography>
+                  {addr.address_line} - {addr.city} - CEP: {addr.pincode}
+                </Typography>
                 <Button
                   size="small"
                   variant="outlined"
-                  onClick={(e) => { e.stopPropagation(); setSelectedAddress(addr); setAddressModalOpen(true); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedAddress(addr);
+                    setAddressModalOpen(true);
+                  }}
                 >
                   Editar
                 </Button>
               </Box>
             ))
           ) : (
-            <Button variant="contained" onClick={() => setAddressModalOpen(true)}>Adicionar endereço</Button>
+            <Button
+              variant="contained"
+              onClick={() => setAddressModalOpen(true)}
+            >
+              Adicionar endereço
+            </Button>
           )}
 
           <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
             <Checkbox
               checked={pickup}
-              onChange={() => { setPickup(!pickup); if (!pickup) setSelectedAddress(null); }}
+              onChange={() => {
+                setPickup(!pickup);
+                if (!pickup) setSelectedAddress(null);
+              }}
             />
             <Typography>Retirar no local</Typography>
           </Box>
         </Box>
 
         {/* Resumo */}
-        <Box sx={{ p: 2, backgroundColor: darkMode ? "#222" : "#fff", borderRadius: 2 }}>
+        <Box
+          sx={{
+            p: 2,
+            backgroundColor: darkMode ? "#222" : "#fff",
+            borderRadius: 2,
+          }}
+        >
           <Typography variant="h6">Resumo da compra</Typography>
           <Divider sx={{ my: 1 }} />
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -204,10 +230,16 @@ const Checkout = () => {
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography>Taxa de entrega</Typography>
-            <Typography>R$ {deliveryFee.toFixed(2)}</Typography>
+            <Typography>R$ {pickup ? 0 : deliveryFee.toFixed(2)}</Typography>
           </Box>
           <Divider sx={{ my: 1 }} />
-          <Box sx={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontWeight: "bold",
+            }}
+          >
             <Typography>Total</Typography>
             <Typography>R$ {total.toFixed(2)}</Typography>
           </Box>
@@ -225,9 +257,22 @@ const Checkout = () => {
         </Button>
       </Box>
 
-      {/* Modal de endereço */}
       <Modal open={addressModalOpen} onClose={() => setAddressModalOpen(false)}>
-        <AddressForm onSave={handleSaveAddress} userAddress={selectedAddress} />
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "90%", sm: 420 },
+            bgcolor: darkMode ? "#1f1f1f" : "#fff",
+            boxShadow: 24,
+            p: 2,
+            borderRadius: 2,
+          }}
+        >
+          <AddressForm onClose={() => setAddressModalOpen(false)} />
+        </Box>
       </Modal>
     </Box>
   );

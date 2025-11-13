@@ -1,6 +1,4 @@
-import { useState, useContext } from "react";
-import {useAuthContext} from "../hooks/useAuthContext";
-import { ThemeContext } from "../context/ThemeProvider";
+import { useState, useEffect, useContext } from "react";
 import {
   Box,
   Button,
@@ -10,64 +8,103 @@ import {
   FormControlLabel,
   Radio,
 } from "@mui/material";
-// AddressForm delegates saving to parent via onSave
+import { ThemeContext } from "../context/ThemeProvider";
+import { useAddressContext } from "../hooks/useAddressContext";
 
-const AddressForm = ({ onSave, userAddress }) => {
+const AddressForm = ({ onClose }) => {
   const { darkMode } = useContext(ThemeContext);
-  const { user } = useAuthContext();
+  const { selectedAddress, setSelectedAddress, createAddress, updateAddress } =
+    useAddressContext();
 
-  const initialAddressLine = userAddress?.address_line || "";
-  let initialStreet = initialAddressLine;
-  let initialNumber = "";
-
-  if (initialAddressLine.includes(",")) {
-    const parts = initialAddressLine.split(",");
-    initialStreet = parts[0].trim();
-    initialNumber = parts[1]?.trim() || "";
-  }
-
-  const [address, setAddress] = useState(initialStreet);
-  const [number, setNumber] = useState(initialNumber);
-  const [neighborhood, setNeighborhood] = useState(userAddress?.neighborhood || "");
-  const [cityState, setCityState] = useState(
-    userAddress ? `${userAddress.city} - ${userAddress.state}` : ""
-  );
-  const [cep, setCep] = useState(userAddress?.pincode || "");
-  const [complement, setComplement] = useState(userAddress?.complement || "");
-  const [reference, setReference] = useState(userAddress?.reference || "");
-  const [favoriteAs, setFavoriteAs] = useState(userAddress?.favoriteAs || "Casa");
+  const [address, setAddress] = useState("");
+  const [number, setNumber] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [city, setCity] = useState("");
+  const [cep, setCep] = useState("");
+  const [complement, setComplement] = useState("");
+  const [favoriteAs, setFavoriteAs] = useState("Casa");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!address || !number || !neighborhood || !cityState || !cep) {
-      alert("Preencha todos os campos obrigatórios.");
-      return;
-    }
+  // ============================ VIA CEP =============================
+  const fetchViaCep = async (cepValue) => {
+    const cleanCep = cepValue.replace(/\D/g, "");
 
-    const [city, state] = cityState.split("-").map((s) => s.trim());
+    if (cleanCep.length !== 8) return;
+
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setAddress(data.logradouro || "");
+        setNeighborhood(data.bairro || "");
+        setCity(data.localidade || "");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+    }
+  };
+
+  const handleCepChange = (v) => {
+    const mask = v.replace(/\D/g, "").replace(/(\d{5})(\d)/, "$1-$2");
+    setCep(mask);
+    fetchViaCep(mask);
+  };
+
+  // ============================ Inicialização =============================
+  useEffect(() => {
+    if (selectedAddress) {
+      const line = selectedAddress.address_line || "";
+      const [street, num] = line.split(",").map((s) => s.trim());
+
+      setAddress(street || "");
+      setNumber(num || "");
+      setNeighborhood(selectedAddress.neighborhood || "");
+      setCity(selectedAddress.city || "");
+      setCep(selectedAddress.pincode || "");
+      setComplement(selectedAddress.complement || "");
+      setFavoriteAs(selectedAddress.favoriteAs || "Casa");
+    } else {
+      setAddress("");
+      setNumber("");
+      setNeighborhood("");
+      setCity("");
+      setCep("");
+      setComplement("");
+      setFavoriteAs("Casa");
+    }
+  }, [selectedAddress]);
+
+  // ============================ Envio =============================
+  const handleSubmit = async () => {
+    if (!address || !number || !neighborhood || !city || !cep) {
+      return alert("Preencha todos os campos obrigatórios.");
+    }
 
     const payload = {
       address_line: `${address}, ${number}`,
       neighborhood,
-      city: city || "",
-      state: state || "",
+      city,
       pincode: cep,
       complement,
-      reference,
       favoriteAs,
-      country: "Brasil",
-      userId: user._id,
+      // state removido — vem como default no schema
+      // reference removido — não existe no schema
     };
 
     try {
       setLoading(true);
 
-      // Delegate the actual save to the parent/context so it can update
-      // centralized state (and avoid double-posting here).
-      const toSave = userAddress?._id ? { ...payload, _id: userAddress._id } : payload;
-      onSave(toSave);
+      let saved;
+      if (selectedAddress?._id) {
+        saved = await updateAddress(selectedAddress._id, payload);
+      } else {
+        saved = await createAddress(payload);
+      }
+
+      setSelectedAddress(saved);
+      if (onClose) onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Erro ao salvar endereço:", err);
       alert("Erro ao salvar endereço");
     } finally {
       setLoading(false);
@@ -80,7 +117,9 @@ const AddressForm = ({ onSave, userAddress }) => {
       color: darkMode ? "#fff" : "#000",
       "& fieldset": { borderColor: darkMode ? "#555" : "#d1d5db" },
       "&:hover fieldset": { borderColor: darkMode ? "#9ca3af" : "#16a34a" },
-      "&.Mui-focused fieldset": { borderColor: darkMode ? "#4ade80" : "#16a34a" },
+      "&.Mui-focused fieldset": {
+        borderColor: darkMode ? "#4ade80" : "#16a34a",
+      },
     },
     "& .MuiInputLabel-root": { color: darkMode ? "#fff" : "#000" },
   };
@@ -100,26 +139,79 @@ const AddressForm = ({ onSave, userAddress }) => {
       }}
     >
       <Typography variant="h6" sx={{ textAlign: "center" }}>
-        Endereço de entrega
+        {selectedAddress ? "Editar Endereço" : "Novo Endereço"}
       </Typography>
 
-      <TextField label="Rua" value={address} onChange={(e) => setAddress(e.target.value)} fullWidth sx={inputSx} />
-      <TextField label="Número" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth sx={inputSx} />
-      <TextField label="Bairro" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} fullWidth sx={inputSx} />
-      <TextField label="Cidade - Estado (ex: São Paulo - SP)" value={cityState} onChange={(e) => setCityState(e.target.value)} fullWidth sx={inputSx} />
-      <TextField label="CEP" value={cep} onChange={(e) => setCep(e.target.value)} fullWidth sx={inputSx} />
-      <TextField label="Complemento" value={complement} onChange={(e) => setComplement(e.target.value)} fullWidth sx={inputSx} />
-      <TextField label="Ponto de referência" value={reference} onChange={(e) => setReference(e.target.value)} fullWidth sx={inputSx} />
+      <TextField
+        label="CEP"
+        value={cep}
+        onChange={(e) => handleCepChange(e.target.value)}
+        fullWidth
+        sx={inputSx}
+      />
+
+      <TextField
+        label="Rua"
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        fullWidth
+        sx={inputSx}
+      />
+
+      <TextField
+        label="Número"
+        value={number}
+        onChange={(e) => setNumber(e.target.value)}
+        fullWidth
+        sx={inputSx}
+      />
+
+      <TextField
+        label="Bairro"
+        value={neighborhood}
+        onChange={(e) => setNeighborhood(e.target.value)}
+        fullWidth
+        sx={inputSx}
+      />
+
+      <TextField
+        label="Cidade"
+        value={city}
+        onChange={(e) => setCity(e.target.value)}
+        fullWidth
+        sx={inputSx}
+      />
+
+      <TextField
+        label="Complemento"
+        value={complement}
+        onChange={(e) => setComplement(e.target.value)}
+        fullWidth
+        sx={inputSx}
+      />
 
       <Box>
         <Typography variant="body2">Favoritar como:</Typography>
-        <RadioGroup row value={favoriteAs} onChange={(e) => setFavoriteAs(e.target.value)}>
+        <RadioGroup
+          row
+          value={favoriteAs}
+          onChange={(e) => setFavoriteAs(e.target.value)}
+        >
           <FormControlLabel value="Casa" control={<Radio />} label="Casa" />
-          <FormControlLabel value="Trabalho" control={<Radio />} label="Trabalho" />
+          <FormControlLabel
+            value="Trabalho"
+            control={<Radio />}
+            label="Trabalho"
+          />
         </RadioGroup>
       </Box>
 
-      <Button variant="contained" color="success" onClick={handleSubmit} disabled={loading}>
+      <Button
+        variant="contained"
+        color="success"
+        onClick={handleSubmit}
+        disabled={loading}
+      >
         {loading ? "Salvando..." : "Salvar Endereço"}
       </Button>
     </Box>

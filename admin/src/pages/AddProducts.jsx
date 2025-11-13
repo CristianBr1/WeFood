@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
 import {
   TextField,
   Button,
@@ -18,7 +17,6 @@ import { ProductService } from "../services/endpoints/product.Service";
 
 const AddProducts = () => {
   const { darkMode } = useContext(ThemeContext);
-  const { user } = useContext(AuthContext);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -38,7 +36,6 @@ const AddProducts = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // 🔹 Buscar categorias
   useEffect(() => {
     const loadCategories = async () => {
       setLoading(true);
@@ -70,22 +67,38 @@ const AddProducts = () => {
     setError("");
     setSuccess("");
 
-    if (!name || !price || !category || !image || !description)
+    if (!name || !price || !category || !image || !description) {
       return setError("Preencha todos os campos obrigatórios.");
+    }
 
     try {
       setLoading(true);
+
+      // ✅ Converter extras e meatOptions para tipos corretos
+      const preparedExtras = extras.map((ex) => ({
+        name: ex.name,
+        price: Number(ex.price) || 0,
+      }));
+
+      const preparedMeatOptions = meatOptions.enabled
+        ? {
+            ...meatOptions,
+            min: Number(meatOptions.min),
+            max: Number(meatOptions.max),
+            pricePerExtra: Number(meatOptions.pricePerExtra),
+          }
+        : { enabled: false };
+
       await ProductService.createProduct(
         {
           name,
-          price,
+          price: Number(price),
           category,
           description,
-          extras,
-          meatOptions,
+          extras: preparedExtras,
+          meatOptions: preparedMeatOptions,
         },
-        image,
-        user?.token
+        image
       );
 
       setSuccess("✅ Produto adicionado com sucesso!");
@@ -98,6 +111,7 @@ const AddProducts = () => {
       setDescription("");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
+      console.error("Erro ao adicionar produto:", err);
       setError(err.message || "Erro ao adicionar produto.");
     } finally {
       setLoading(false);
@@ -176,7 +190,6 @@ const AddProducts = () => {
             className="p-2 border rounded-md"
           />
 
-          {/* Descrição */}
           <div>
             <label className="font-semibold mb-2 block">
               Descrição do Produto
@@ -193,7 +206,6 @@ const AddProducts = () => {
             />
           </div>
 
-          {/* Extras */}
           <div>
             <label className="font-semibold mb-2 block">
               Extras (opcionais)
@@ -225,7 +237,6 @@ const AddProducts = () => {
             </Button>
           </div>
 
-          {/* Opções de carne */}
           <div>
             <label className="font-semibold mb-2 block">
               Opções de Carne (opcional)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import {
   Typography,
   Button,
@@ -30,25 +30,27 @@ const Orders = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (user?.token) fetchOrders();
-  }, [user]);
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const data = await OrderService.getOrders();
+        console.log(data)
+        setOrders(data || []);
+      } catch (err) {
+        console.error("Erro ao buscar pedidos:", err);
+        setError(err.message || "Erro ao carregar pedidos");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await OrderService.getOrders(user?.token);
-      setOrders(data);
-    } catch (err) {
-      setError(err.message || "Erro ao carregar pedidos");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchOrders();
+  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Deseja excluir este pedido?")) return;
     try {
-      await OrderService.deleteOrder(id, user?.token);
+      await OrderService.deleteOrder(id);
       setOrders((prev) => prev.filter((o) => o._id !== id));
     } catch (err) {
       alert(err.message);

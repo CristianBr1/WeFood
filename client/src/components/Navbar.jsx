@@ -28,12 +28,15 @@ const Navbar = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userName, setUserName] = useState("");
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const name = user?.name || "Usuário";
-    const firstName = name.split(" ")[0];
+useEffect(() => {
+  if (user?.name) {
+    const firstName = user.name.split(" ")[0];
     setUserName(firstName);
-  }, []);
+  } else {
+    setUserName("Usuário");
+  }
+}, [user]);
+
 
   // Buscar dados da loja
   useEffect(() => {
@@ -141,6 +144,11 @@ const Navbar = () => {
           <li>
             <Link to="/sobre" style={{ color: "inherit" }}>
               Sobre Nós
+            </Link>
+          </li>
+             <li>
+            <Link to="/checklist" style={{ color: "inherit" }}>
+              Próximos Passos
             </Link>
           </li>
         </ul>

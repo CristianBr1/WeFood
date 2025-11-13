@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import { BannerService } from "../services/endpoints/banner.Service";
 import { Button, TextField, Box, Typography } from "@mui/material";
 import Loading from "../components/Loading";
@@ -27,18 +27,14 @@ const AddBanners = () => {
 
     try {
       setLoading(true);
-
-      // 🔹 Usa token do usuário
-      await BannerService.createBanner(title, imageFile, user?.token);
+      await BannerService.createBanner(title, imageFile);
 
       setSuccess("✅ Banner enviado com sucesso!");
       setTitle("");
       setImageFile(null);
 
-      // Limpa mensagem após 3 segundos
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      // 🔹 Tratamento detalhado do erro
       console.error("Erro ao enviar banner:", err);
       setError(err.message || "Erro ao enviar banner.");
     } finally {

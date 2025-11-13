@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import { Box, Typography, Button } from "@mui/material";
 import ProductModal from "../components/ProductModal";
 import ViewProductModal from "../components/ViewProductModal";

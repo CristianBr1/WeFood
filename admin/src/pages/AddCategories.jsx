@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { ThemeContext } from "../context/ThemeProvider";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import { CategoryService } from "../services/endpoints/category.Service";
 import { Button, TextField, Box, Typography } from "@mui/material";
 import Loading from "../components/Loading";
@@ -17,6 +17,7 @@ const AddCategories = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!name || !image) {
       setError("Preencha todos os campos obrigatórios.");
       return;
@@ -27,14 +28,17 @@ const AddCategories = () => {
       setError("");
       setSuccess("");
 
-      // 🔹 Passando o token do user
-      await CategoryService.createCategory(name, image, user?.token);
+      // ✅ Não precisa passar token manualmente
+      await CategoryService.createCategory(name, image);
 
       setSuccess("✅ Categoria adicionada com sucesso!");
       setName("");
       setImage(null);
+
+      // Limpa mensagem de sucesso após 3 segundos
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
+      console.error("Erro ao adicionar categoria:", err);
       setError(err.message || "Erro ao adicionar categoria.");
     } finally {
       setLoading(false);

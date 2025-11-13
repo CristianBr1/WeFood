@@ -6,17 +6,18 @@ import { AddressService } from "../services/endpoints/address.Service";
 export const AddressContext = createContext(null);
 
 const AddressProvider = ({ children }) => {
-  const { user } = useAuthContext(); // 🔹 pega o token automaticamente
+  const { user } = useAuthContext(); // apenas para saber se está logado
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // ===================== BUSCAR ENDEREÇOS =====================
   const fetchAddresses = async () => {
-    if (!user?.token) return;
+    if (!user) return; // só busca se logado
     setLoading(true);
     try {
-      const data = await AddressService.getAddresses(user.token);
+      // sem token — cookie HTTP-only já vai no request
+      const data = await AddressService.getAddresses();
       setAddresses(data || []);
       if (data?.length > 0) setSelectedAddress(data[0]);
     } catch (err) {
@@ -29,7 +30,11 @@ const AddressProvider = ({ children }) => {
   // ===================== CRIAR ENDEREÇO =====================
   const createAddress = async (addressData) => {
     try {
-      const newAddress = await AddressService.createAddress(addressData, user.token);
+      // Removido qualquer campo "state" se vier no objeto
+      const { state, ...cleanData } = addressData;
+
+      const newAddress = await AddressService.createAddress(cleanData);
+
       if (newAddress) {
         setAddresses((prev) => [...prev, newAddress]);
         return newAddress;
@@ -42,10 +47,15 @@ const AddressProvider = ({ children }) => {
   // ===================== ATUALIZAR ENDEREÇO =====================
   const updateAddress = async (id, updates) => {
     try {
-      const updated = await AddressService.updateAddress(id, updates, user.token);
+      // Remove "state" se existir
+      const { state, ...cleanUpdates } = updates;
+
+      const updated = await AddressService.updateAddress(id, cleanUpdates);
+
       setAddresses((prev) =>
         prev.map((addr) => (addr._id === id ? updated : addr))
       );
+
       return updated;
     } catch (err) {
       console.error("Erro ao atualizar endereço:", err);
@@ -55,22 +65,26 @@ const AddressProvider = ({ children }) => {
   // ===================== DELETAR ENDEREÇO =====================
   const deleteAddress = async (id) => {
     try {
-      await AddressService.deleteAddress(id, user.token);
+      await AddressService.deleteAddress(id);
       setAddresses((prev) => prev.filter((addr) => addr._id !== id));
-      if (selectedAddress?._id === id) setSelectedAddress(null);
+
+      if (selectedAddress?._id === id) {
+        setSelectedAddress(null);
+      }
+
     } catch (err) {
       console.error("Erro ao deletar endereço:", err);
     }
   };
 
-  // 🔹 Atualiza automaticamente quando o usuário loga/desloga
+  // Atualiza automaticamente quando o usuário loga/desloga
   useEffect(() => {
-    if (user?.token) fetchAddresses();
+    if (user) fetchAddresses();
     else {
       setAddresses([]);
       setSelectedAddress(null);
     }
-  }, [user?.token]);
+  }, [user]);
 
   return (
     <AddressContext.Provider

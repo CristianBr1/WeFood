@@ -1,3 +1,4 @@
+// models/user.model.js
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -28,25 +29,29 @@ const userSchema = new mongoose.Schema(
       select: false, // não retorna por padrão nas queries
     },
 
-    // 🔹 Avatar do usuário (URL de imagem)
+    // 🔹 Avatar do usuário (URL)
     avatar: {
       type: String,
       default: "",
     },
 
-    // 🔹 Telefone ou celular
+    // 🔹 Telefone (opcional)
     mobile: {
       type: String,
+      validate: {
+        validator: (v) => !v || /^(\+?\d{1,3})?\d{8,14}$/.test(v),
+        message: "Número de telefone inválido.",
+      },
       default: "",
     },
 
-    // 🔹 Token de atualização (refresh token JWT)
+    // 🔹 Token de atualização (caso implemente refresh tokens)
     refresh_token: {
       type: String,
       default: "",
     },
 
-    // 🔹 E-mail verificado (confirmação)
+    // 🔹 E-mail verificado
     verify_email: {
       type: Boolean,
       default: false,
@@ -58,14 +63,17 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // 🔹 Status do usuário
+    // 🔹 Status da conta
     status: {
       type: String,
-      enum: ["Active", "Inactive", "Suspended"],
+      enum: {
+        values: ["Active", "Inactive", "Suspended"],
+        message: "Status inválido. Use Active, Inactive ou Suspended.",
+      },
       default: "Active",
     },
 
-    // 🔹 Endereços do usuário (referência)
+    // 🔹 Endereços do usuário
     address_details: [
       {
         type: mongoose.Schema.ObjectId,
@@ -73,7 +81,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔹 Carrinho de compras
+    // 🔹 Carrinho
     shopping_cart: [
       {
         type: mongoose.Schema.ObjectId,
@@ -89,13 +97,11 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔹 Token de recuperação de senha (OTP)
+    // 🔹 Recuperação de senha
     forgot_password_otp: {
       type: String,
       default: null,
     },
-
-    // 🔹 Validade do OTP
     forgot_password_expiry: {
       type: Date,
       default: null,
@@ -110,11 +116,12 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
   }
 );
 
 //
-// 🔐 Criptografia da senha antes de salvar
+// 🔐 Criptografa a senha antes de salvar
 //
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
@@ -124,14 +131,17 @@ userSchema.pre("save", async function (next) {
 });
 
 //
-// 🔑 Método para comparar senha inserida com a salva no banco
+// 🔑 Compara senha inserida com a salva no banco
 //
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  if (!this.password) {
+    throw new Error("Senha não carregada. Use .select('+password')");
+  }
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
 //
-// 🔄 Atualiza data do último login
+// 🔄 Atualiza a data do último login
 //
 userSchema.methods.updateLastLogin = async function () {
   this.last_login_date = new Date();
@@ -139,16 +149,29 @@ userSchema.methods.updateLastLogin = async function () {
 };
 
 //
-// 🧠 Formata a saída JSON removendo campos sensíveis
+// 🧠 Remove dados sensíveis ao retornar JSON
 //
 userSchema.methods.toJSON = function () {
-  const obj = this.toObject();
+  const obj = this.toObject({ virtuals: true });
   delete obj.password;
   delete obj.refresh_token;
   delete obj.forgot_password_otp;
   delete obj.forgot_password_expiry;
+  delete obj.__v;
   return obj;
 };
+
+//
+// 👑 Virtual para verificar admin
+//
+userSchema.virtual("isAdmin").get(function () {
+  return this.role === "ADMIN";
+});
+
+//
+// 📧 Índice único de e-mail (garantia no banco)
+//
+userSchema.index({ email: 1 }, { unique: true });
 
 const User = mongoose.model("User", userSchema);
 export default User;

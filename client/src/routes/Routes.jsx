@@ -10,6 +10,7 @@ import Restaurante from "../pages/Restaurante";
 import Sobre from "../pages/Sobre";
 import OrdersPage from "../pages/OrdersPage";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Checklist from "../components/Checklist";
 
 const Router = () => {
   return (
@@ -36,6 +37,7 @@ const Router = () => {
 
       {/* SOBRE */}
       <Route path="/sobre" element={<Sobre />} />
+      <Route path="/checklist" element={<Checklist />} />
     </Routes>
   );
 };

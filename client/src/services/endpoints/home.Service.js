@@ -4,33 +4,16 @@ import { fetchData } from "../apiService";
  * HomeService
  * ==================== */
 export const HomeService = {
-  /**
-   * Retorna todas as categorias
-   * @param {string} token opcional
-   */
-  getCategories: (token) => fetchData("/categories", {}, token),
+  /** 🔹 Retorna todas as categorias */
+  getCategories: () => fetchData("/categories"),
 
-  /**
-   * Retorna produtos de uma categoria específica
-   * @param {string} categoryId
-   * @param {object} extraParams parâmetros adicionais (ex.: filtros, paginação)
-   * @param {string} token opcional
-   */
-  getProductsByCategory: (categoryId, extraParams = {}, token) =>
-    fetchData("/products", { categoryId, ...extraParams }, token),
+  /** 🔹 Retorna produtos de uma categoria específica */
+  getProductsByCategory: (categoryId, extraParams = {}) =>
+    fetchData("/products", { categoryId, ...extraParams }),
 
-  /**
-   * Retorna todos os produtos (sem filtrar por categoria)
-   * @param {object} extraParams parâmetros adicionais (ex.: filtros, paginação)
-   * @param {string} token opcional
-   */
-  getAllProducts: (extraParams = {}, token) =>
-    fetchData("/products", { ...extraParams }, token),
+  /** 🔹 Retorna todos os produtos (sem filtro de categoria) */
+  getAllProducts: (extraParams = {}) => fetchData("/products", extraParams),
 
-  /**
-   * Retorna detalhes de um produto específico
-   * @param {string} id
-   * @param {string} token opcional
-   */
-  getProductById: (id, token) => fetchData(`/products/${id}`, {}, token),
+  /** 🔹 Retorna detalhes de um produto específico */
+  getProductById: (id) => fetchData(`/products/${id}`),
 };

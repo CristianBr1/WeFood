@@ -2,20 +2,87 @@ import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema(
   {
-    address_line: { type: String, default: "" }, // Rua, número
-    complement: { type: String, default: "" }, // Complemento ou bloco/apartamento
-    neighborhood: { type: String, default: "" }, // Bairro
-    city: { type: String, default: "" },
-    state: { type: String, default: "" },
-    pincode: { type: String, required: [true, "Provide pincode"] },
-    country: { type: String, default: "Brasil" },
-    mobile: { type: String, default: null },
-    favoriteAs: { type: String, default: "Casa" }, // Casa, Trabalho, etc.
-    status: { type: Boolean, default: true },
-    userId: { type: mongoose.Schema.ObjectId, ref: "User", required: true },
+    // 🔹 Endereço (rua + número)
+    address_line: {
+      type: String,
+      required: [true, "O endereço é obrigatório."],
+      trim: true,
+    },
+
+    // 🔹 Complemento
+    complement: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    // 🔹 Bairro
+    neighborhood: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    // 🔹 Cidade
+    city: {
+      type: String,
+      required: [true, "A cidade é obrigatória."],
+      trim: true,
+    },
+
+    // 🔹 CEP
+    pincode: {
+      type: String,
+      required: [true, "O CEP é obrigatório."],
+      match: [/^\d{5}-?\d{3}$/, "CEP inválido."],
+      trim: true,
+    },
+
+    // 🔹 País
+    country: {
+      type: String,
+      default: "Brasil",
+      trim: true,
+    },
+
+    // 🔹 Telefone
+    mobile: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+
+    // 🔹 Identificador (Casa, Trabalho, etc.)
+    favoriteAs: {
+      type: String,
+      default: "Casa",
+      trim: true,
+    },
+
+    // 🔹 Status do endereço
+    status: {
+      type: Boolean,
+      default: true,
+    },
+
+    // 🔹 Dono do endereço
+    userId: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
-const AddressModel = mongoose.model("address", addressSchema);
+//
+// 🧠 Limpa saída JSON (remove __v e timestamps se quiser enxugar o payload)
+//
+addressSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.__v;
+  return obj;
+};
+
+const AddressModel = mongoose.model("Address", addressSchema);
 export default AddressModel;

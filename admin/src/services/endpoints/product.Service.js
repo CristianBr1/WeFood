@@ -2,37 +2,55 @@ import { fetchData, deleteData } from "../apiService";
 import { uploadFormData } from "../uploadService";
 
 export const ProductService = {
-  getProducts: () => fetchData("/products"),
-  deleteProduct: (id) => deleteData(`/products/${id}`),
+  // 🔹 Buscar todos os produtos
+  getProducts: async () => {
+    const data = await fetchData("/products");
+    return data || [];
+  },
 
-  createProduct: (data, image) => {
+  // 🔹 Deletar produto pelo ID
+  deleteProduct: async (id) => {
+    if (!id) throw new Error("ID do produto é obrigatório");
+    return deleteData(`/products/${id}`);
+  },
+
+  // 🔹 Criar novo produto
+  createProduct: async (data, image) => {
     const fields = {
       ...data,
+      description: data.description || "",
       extras: JSON.stringify(data.extras || []),
-      meatOptions: data.meatOptions ? JSON.stringify(data.meatOptions) : null,
+      meatOptions: data.meatOptions
+        ? JSON.stringify(data.meatOptions)
+        : JSON.stringify([]),
     };
 
     return uploadFormData({
       endpoint: "/products",
       fields,
-      file: image,
+      file: image || null,
       fileKey: "image",
       method: "POST",
     });
   },
 
-  updateProduct: (id, data, image) => {
+  // 🔹 Atualizar produto existente
+  updateProduct: async (id, data, image) => {
+    if (!id) throw new Error("ID do produto é obrigatório");
+
     const fields = {
       ...data,
       description: data.description || "",
       extras: JSON.stringify(data.extras || []),
-      meatOptions: data.meatOptions ? JSON.stringify(data.meatOptions) : null,
+      meatOptions: data.meatOptions
+        ? JSON.stringify(data.meatOptions)
+        : JSON.stringify([]),
     };
 
     return uploadFormData({
       endpoint: `/products/${id}`,
       fields,
-      file: image,
+      file: image || null,
       fileKey: "image",
       method: "PUT",
     });

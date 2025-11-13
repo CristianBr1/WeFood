@@ -1,6 +1,6 @@
 import { memo, useState, useContext, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import AuthContext from "../context/AuthContext";
+import { AuthContext } from "../context/AuthProvider";
 import { FaRegImage, FaAngleDown } from "react-icons/fa6";
 import { RxDashboard } from "react-icons/rx";
 import { FiUsers } from "react-icons/fi";

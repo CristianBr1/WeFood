@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/simulate-payment", authMiddleware, createOrder);
 
 // 👤 Usuário logado vê seus próprios pedidos
-router.get("/user/:userId", authMiddleware, getUserOrders);
+router.get("/my-orders", authMiddleware, getUserOrders);
 
 // 👑 Apenas admin pode listar todos os pedidos
 router.get("/", authMiddleware, adminMiddleware, getAllOrders);
