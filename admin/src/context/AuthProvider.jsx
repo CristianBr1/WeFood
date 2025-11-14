@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from "react";
-import { AuthService } from "../services/AuthService";
+import { AuthService } from "../services/endpoints/auth.Service";
 import Loading from "../components/Loading";
 
 export const AuthContext = createContext();
@@ -50,9 +50,7 @@ export const AuthProvider = ({ children }) => {
   if (loading) return <Loading text="Carregando sessão..." />;
 
   return (
-    <AuthContext.Provider
-      value={{ user, login, logout, updateUser, loading }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { postData, fetchData } from "./apiService";
+import { postData, fetchData } from "../apiService";
 
 export const AuthService = {
   /**
