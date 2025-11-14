@@ -168,10 +168,6 @@ userSchema.virtual("isAdmin").get(function () {
   return this.role === "ADMIN";
 });
 
-//
-// 📧 Índice único de e-mail (garantia no banco)
-//
-userSchema.index({ email: 1 }, { unique: true });
 
 const User = mongoose.model("User", userSchema);
 export default User;

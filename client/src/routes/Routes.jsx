@@ -11,6 +11,7 @@ import Sobre from "../pages/Sobre";
 import OrdersPage from "../pages/OrdersPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Checklist from "../components/Checklist";
+import CheckoutSuccess from "../components/CheckoutSuccess";
 
 const Router = () => {
   return (
@@ -28,6 +29,7 @@ const Router = () => {
       {/* ROTAS PROTEGIDAS */}
       <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
       <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+      <Route path="checkout/success" element={<ProtectedRoute><CheckoutSuccess /></ProtectedRoute>} />
       <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
       <Route path="/perfil/:id" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
       <Route path="/restaurante" element={<ProtectedRoute><Restaurante /></ProtectedRoute>} />

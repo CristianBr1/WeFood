@@ -1,19 +1,6 @@
-import React, { useState } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, Clock } from "lucide-react";
+import React from "react";
+import { CheckCircle2, Clock } from "lucide-react";
 import Navbar from "./Navbar";
-
-/* ======================
-   Componentes internos estilizados
-====================== */
-const Card = ({ children }) => (
-  <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 transition-all hover:shadow-xl">
-    {children}
-  </div>
-);
-
-const CardContent = ({ children }) => (
-  <div className="mt-4 text-gray-700">{children}</div>
-);
 
 const Progress = ({ value }) => (
   <div className="w-full h-3 bg-gray-300/40 rounded-full mt-3 overflow-hidden">
@@ -25,11 +12,6 @@ const Progress = ({ value }) => (
 );
 
 export default function Checklist() {
-  const [openSections, setOpenSections] = useState({});
-
-  const toggleSection = (key) =>
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
-
   const checklist = [
     /* ============================
         🧠 Backend
@@ -200,8 +182,6 @@ export default function Checklist() {
       ],
     },
   ];
-
-  // Calcular progresso
   const totalTasks = checklist.reduce((acc, s) => acc + s.items.length, 0);
   const doneTasks = checklist.reduce(
     (acc, s) => acc + s.items.filter((i) => i.done).length,
@@ -212,62 +192,44 @@ export default function Checklist() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-100 flex justify-center items-start py-10 mt-20! px-4">
-        <div className="w-full max-w-3xl space-y-6">
+      <div className="min-h-screen bg-gray-100 flex justify-center py-10 px-4 mt-20!">
+        <div className="w-full max-w-3xl">
           <h1 className="text-4xl font-bold text-center text-gray-900 drop-shadow-sm">
             📋 Checklist do Projeto WeFood
           </h1>
 
-          <p className="text-center text-gray-600 text-lg">
+          <p className="text-center text-gray-600 text-lg mb-6!">
             Acompanhe o progresso geral do desenvolvimento 🍽️
           </p>
 
-          <Card>
-            <p className="text-gray-700 text-lg font-medium">
-              Progresso Geral:
-            </p>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6! mb-6!">
+            <p className="text-gray-700 text-lg font-medium">Progresso Geral:</p>
             <Progress value={progress} />
-            <p className="mt-2 text-sm text-gray-500 text-right">
+            <p className="mt-2! text-sm text-gray-500 text-right">
               {doneTasks} de {totalTasks} tarefas concluídas ({progress}%)
             </p>
-          </Card>
 
-          {checklist.map((section, index) => (
-            <Card key={index}>
-              <div
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleSection(index)}
-              >
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {section.title}
-                </h2>
-
-                {openSections[index] ? (
-                  <ChevronUp className="text-gray-600" />
-                ) : (
-                  <ChevronDown className="text-gray-600" />
-                )}
-              </div>
-
-              {openSections[index] && (
-                <CardContent>
-                  <ul className="space-y-3 mt-2">
-                    {section.items.map((item, i) => (
-                      <li key={i} className="flex items-center space-x-3">
+            {/* Lista única com seções */}
+            <div className="mt-6! space-y-4!">
+              {checklist.map((section, i) => (
+                <div key={i}>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2!">
+                    {section.title}
+                  </h2>
+                  <ul className="space-y-2!">
+                    {section.items.map((item, j) => (
+                      <li
+                        key={j}
+                        className="flex items-center space-x-3! p-2! bg-gray-50 rounded-md"
+                      >
                         {item.done ? (
-                          <CheckCircle2
-                            className="text-green-500 drop-shadow-sm"
-                            size={20}
-                          />
+                          <CheckCircle2 className="text-green-500" size={20} />
                         ) : (
                           <Clock className="text-gray-400" size={20} />
                         )}
-
                         <span
-                          className={`text-base ${
-                            item.done
-                              ? "line-through text-gray-400"
-                              : "text-gray-700"
+                          className={`${
+                            item.done ? "line-through text-gray-400" : "text-gray-700"
                           }`}
                         >
                           {item.text}
@@ -275,10 +237,10 @@ export default function Checklist() {
                       </li>
                     ))}
                   </ul>
-                </CardContent>
-              )}
-            </Card>
-          ))}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </>

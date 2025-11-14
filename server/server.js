@@ -21,43 +21,19 @@ import cartRoutes from "./routes/cart.routes.js";
 import addressRoutes from "./routes/address.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import seedHamburgersRoute from "./routes/seedHamburgers.js";
+import paymentRoutes from "./routes/payment.routes.js";
+import stripeWebhookRoutes from "./routes/stripeWebhook.routes.js";
+import stripeTestWebhook from "./routes/stripeTestWebhook.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(express.json());
+// ---------------------
+// Middlewares globais
+// ---------------------
 app.use(cookieParser());
-
-// ---------------------
-// Middlewares
-// ---------------------
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "https://we-food-green.vercel.app",
-  "https://wefood-two.vercel.app"
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Se a requisição vier do próprio servidor (sem header origin)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Origin não permitido pelo CORS"), false);
-      }
-    },
-    credentials: true,
-  })
-);
-
-
-
 app.use(morgan("combined"));
 app.use(
   helmet({
@@ -66,9 +42,35 @@ app.use(
   })
 );
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://we-food-green.vercel.app",
+  "https://wefood-two.vercel.app",
+];
 
-// 🔹 Acesso às imagens enviadas
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Origin não permitido pelo CORS"), false);
+    },
+    credentials: true,
+  })
+);
+
+// 🔹 Rota para arquivos públicos
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// 🔹 Body parser para JSON exceto webhook
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/payments/webhook") {
+    next(); // stripe precisa de raw body
+  } else {
+    express.json()(req, res, next);
+  }
+});
 
 // ---------------------
 // Rotas
@@ -84,18 +86,23 @@ app.use("/api/store", storeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api", seedHamburgersRoute);
+app.use("/api/payments", paymentRoutes);
+app.use("/webhook-test", stripeTestWebhook);
+
+// Stripe webhook deve vir **antes de express.json()**, com raw body
+app.use("/api/payments/webhook", stripeWebhookRoutes);
 
 // ---------------------
-// Inicialização
+// Teste de rota
 // ---------------------
 const PORT = process.env.PORT || 8000;
-
 app.get("/", (req, res) => {
-  res.json({
-    message: `✅ Server está rodando na porta ${PORT}`,
-  });
+  res.json({ message: `✅ Server está rodando na porta ${PORT}` });
 });
 
+// ---------------------
+// Conectar ao MongoDB e iniciar servidor
+// ---------------------
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
