@@ -43,17 +43,4 @@ export const AuthService = {
       return null;
     }
   },
-
-  /**
-   * 🔹 Verifica se existe sessão válida no backend
-   * Usado para evitar chamadas desnecessárias a /profile
-   */
-  hasSession: async () => {
-    try {
-      const data = await fetchData("/auth/check");
-      return data?.authenticated === true;
-    } catch {
-      return false;
-    }
-  },
 };
