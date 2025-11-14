@@ -8,12 +8,13 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/check", (req, res) => {
-  if (req.user) {
-    return res.json({ authenticated: true, user: req.user });
-  }
-  return res.json({ authenticated: false });
+router.get("/check", authMiddleware, (req, res) => {
+  return res.json({
+    authenticated: true,
+    user: req.user,
+  });
 });
+
 
 router.post("/register", registerUser); // registro
 router.post("/login", loginUser); // login

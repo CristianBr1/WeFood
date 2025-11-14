@@ -34,7 +34,6 @@ const Orders = () => {
       try {
         setLoading(true);
         const data = await OrderService.getOrders();
-        console.log(data)
         setOrders(data || []);
       } catch (err) {
         console.error("Erro ao buscar pedidos:", err);
