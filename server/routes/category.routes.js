@@ -7,6 +7,8 @@ import {
   updateCategory, 
   deleteCategory 
 } from "../controllers/category.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { adminMiddleware } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
 
@@ -23,14 +25,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Rotas
-router.post("/", upload.single("image"), createCategory);
+// Rotas públicas
 router.get("/", getCategories);
 
-// Atualizar categoria (nome e imagem opcional)
-router.put("/:id", upload.single("image"), updateCategory);
-
-// Deletar categoria
-router.delete("/:id", deleteCategory);
+// Rotas protegidas (admin)
+router.post("/", authMiddleware, adminMiddleware, upload.single("image"), createCategory);
+router.put("/:id", authMiddleware, adminMiddleware, upload.single("image"), updateCategory);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteCategory);
 
 export default router;

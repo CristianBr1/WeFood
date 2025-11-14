@@ -33,19 +33,29 @@ app.use(cookieParser());
 // ---------------------
 // Middlewares
 // ---------------------
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://we-food-green.vercel.app",
+  "https://wefood-two.vercel.app"
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // client local
-      "http://localhost:5174", // admin local
-      "https://wefood-client.vercel.app", // antigo front
-      "https://wefood-admin.vercel.app", // admin
-      "https://we-food-green.vercel.app", // 🚀 novo front (client)
-      "https://wefood-two.vercel.app", // 🚀 novo front (admin)
-    ],
+    origin: function (origin, callback) {
+      // Se a requisição vier do próprio servidor (sem header origin)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Origin não permitido pelo CORS"), false);
+      }
+    },
     credentials: true,
   })
 );
+
 
 
 app.use(morgan("combined"));

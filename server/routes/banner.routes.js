@@ -5,6 +5,8 @@ import {
   getBanners,
   deleteBanner,
 } from "../controllers/banner.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { adminMiddleware } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
 
@@ -20,9 +22,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Rotas
+// Rotas públicas
 router.get("/", getBanners);
-router.post("/", upload.single("image"), createBanner);
-router.delete("/:id", deleteBanner);
+
+// Rotas protegidas (admin)
+router.post("/", authMiddleware, adminMiddleware, upload.single("image"), createBanner);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteBanner);
 
 export default router;

@@ -7,6 +7,8 @@ import {
   deleteProduct,
   updateProduct,
 } from "../controllers/product.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { adminMiddleware } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
 
@@ -22,10 +24,24 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Rotas
-router.post("/", upload.single("image"), createProduct);
+// Rotas públicas
 router.get("/", getProducts);
-router.delete("/:id", deleteProduct);
-router.put("/:id", upload.single("image"), updateProduct);
+
+// Rotas protegidas (admin)
+router.post(
+  "/",
+  authMiddleware,
+  adminMiddleware,
+  upload.single("image"),
+  createProduct
+);
+router.put(
+  "/:id",
+  authMiddleware,
+  adminMiddleware,
+  upload.single("image"),
+  updateProduct
+);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteProduct);
 
 export default router;

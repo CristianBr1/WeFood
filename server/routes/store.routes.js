@@ -3,6 +3,8 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 import { getStore, saveStore, deleteLogo } from "../controllers/store.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { adminMiddleware } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
 
@@ -12,7 +14,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// ⚙️ Configuração do multer (salva direto em uploads/)
+// ⚙️ Configuração do multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
@@ -24,9 +26,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// 🧩 Rotas
+// Rotas públicas
 router.get("/", getStore); // Buscar dados da loja
-router.post("/", upload.single("logo"), saveStore); // Criar/atualizar loja
-router.delete("/logo", deleteLogo); // Excluir logo
+
+// Rotas protegidas (admin)
+router.post("/", authMiddleware, adminMiddleware, upload.single("logo"), saveStore);
+router.delete("/logo", authMiddleware, adminMiddleware, deleteLogo);
 
 export default router;
