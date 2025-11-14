@@ -3,7 +3,6 @@ import { postData, fetchData } from "./apiService";
 export const AuthService = {
   /**
    * 🔹 Login do usuário
-   * Backend retorna user + seta cookie httpOnly
    */
   login: async (email, password) => {
     try {
@@ -20,8 +19,7 @@ export const AuthService = {
   },
 
   /**
-   * 🔹 Logout do usuário
-   * Backend expira cookie
+   * 🔹 Logout
    */
   logout: async () => {
     try {
@@ -34,8 +32,7 @@ export const AuthService = {
   },
 
   /**
-   * 🔹 Retorna dados do usuário logado
-   * Usa cookie httpOnly automaticamente
+   * 🔹 Obtém perfil do usuário logado
    */
   getProfile: async () => {
     try {
@@ -44,6 +41,19 @@ export const AuthService = {
     } catch (err) {
       console.warn("Não há usuário logado:", err);
       return null;
+    }
+  },
+
+  /**
+   * 🔹 Verifica se existe sessão válida no backend
+   * Usado para evitar chamadas desnecessárias a /profile
+   */
+  hasSession: async () => {
+    try {
+      const data = await fetchData("/auth/check");
+      return data?.authenticated === true;
+    } catch {
+      return false;
     }
   },
 };

@@ -1,49 +1,66 @@
 import api from "./api";
 
-/** ==========================
- *  Funções Genéricas da API
- * ========================== */
+const handleError = (error, endpoint) => {
+  const status = error?.response?.status;
 
-// GET genérico
+  // 🔸 Se for 401, não loga nada — isso é esperado quando o usuário não está logado
+  if (status === 401) {
+    return Promise.reject({ unauthorized: true });
+  }
+
+  // 🔸 Loga erros reais
+  console.error(`❌ Erro ao acessar ${endpoint}:`, error.response?.data || error.message);
+  return Promise.reject(error);
+};
+
+/** =============================
+ *     GET
+ * =============================
+ */
 export const fetchData = async (endpoint, params = {}) => {
   try {
-    const { data } = await api.get(endpoint, { params });
-    return data;
-  } catch (error) {
-    console.error(`❌ Erro ao buscar ${endpoint}:`, error);
-    throw error.response?.data?.message || "Erro ao carregar dados";
+    const res = await api.get(endpoint, { params });
+    return res.data;
+  } catch (err) {
+    return handleError(err, endpoint);
   }
 };
 
-// POST genérico
+/** =============================
+ *     POST
+ * =============================
+ */
 export const postData = async (endpoint, body = {}) => {
   try {
-    const { data } = await api.post(endpoint, body);
-    return data;
-  } catch (error) {
-    console.error(`❌ Erro ao enviar dados para ${endpoint}:`, error);
-    throw error.response?.data?.message || "Erro ao salvar dados";
+    const res = await api.post(endpoint, body);
+    return res.data;
+  } catch (err) {
+    return handleError(err, endpoint);
   }
 };
 
-// PUT genérico
+/** =============================
+ *     PUT / PATCH
+ * =============================
+ */
 export const updateData = async (endpoint, body = {}) => {
   try {
-    const { data } = await api.put(endpoint, body);
-    return data;
-  } catch (error) {
-    console.error(`❌ Erro ao atualizar ${endpoint}:`, error);
-    throw error.response?.data?.message || "Erro ao atualizar dados";
+    const res = await api.put(endpoint, body);
+    return res.data;
+  } catch (err) {
+    return handleError(err, endpoint);
   }
 };
 
-// DELETE genérico
+/** =============================
+ *     DELETE
+ * =============================
+ */
 export const deleteData = async (endpoint) => {
   try {
-    const { data } = await api.delete(endpoint);
-    return data;
-  } catch (error) {
-    console.error(`❌ Erro ao excluir ${endpoint}:`, error);
-    throw error.response?.data?.message || "Erro ao excluir item";
+    const res = await api.delete(endpoint);
+    return res.data;
+  } catch (err) {
+    return handleError(err, endpoint);
   }
 };

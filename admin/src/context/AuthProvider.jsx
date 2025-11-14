@@ -8,32 +8,41 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Checa sessão no backend ao carregar o app
+  // 🔍 Verifica sessão SOMENTE se existir token/cookie
   const checkSession = async () => {
-    setLoading(true);
-    const currentUser = await AuthService.getProfile();
-    setUser(currentUser);
-    setLoading(false);
+    try {
+      // 🔹 antes de tentar buscar /profile, verificar se existe sessão
+      const hasSession = await AuthService.hasSession(); // vamos criar isso
+      if (!hasSession) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      const currentUser = await AuthService.getProfile();
+      setUser(currentUser);
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     checkSession();
   }, []);
 
-  // 🔹 Login
   const login = async (email, password) => {
     const loggedUser = await AuthService.login(email, password);
     setUser(loggedUser);
     return loggedUser;
   };
 
-  // 🔹 Logout
   const logout = async () => {
     await AuthService.logout();
     setUser(null);
   };
 
-  // 🔹 Atualiza campos do usuário no frontend
   const updateUser = (fields) => {
     setUser((prev) => ({ ...prev, ...fields }));
   };
@@ -41,7 +50,9 @@ export const AuthProvider = ({ children }) => {
   if (loading) return <Loading text="Carregando sessão..." />;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, updateUser, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
