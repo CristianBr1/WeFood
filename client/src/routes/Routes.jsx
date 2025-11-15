@@ -12,6 +12,7 @@ import OrdersPage from "../pages/OrdersPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Checklist from "../components/Checklist";
 import CheckoutSuccess from "../components/CheckoutSuccess";
+import GoogleCallbackPage from "../components/GoogleCallbackPage";
 
 const Router = () => {
   return (
@@ -25,6 +26,7 @@ const Router = () => {
       {/* AUTENTICAÇÃO */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/auth/callback" element={<GoogleCallbackPage />} />
 
       {/* ROTAS PROTEGIDAS */}
       <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />

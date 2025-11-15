@@ -1,6 +1,8 @@
-// user.controller.js
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -11,6 +13,54 @@ const cookieOptions = {
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+/* ============================================================
+   🔵 GOOGLE OAUTH LOGIN
+============================================================ */
+export const googleOAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential)
+      return res.status(400).json({ message: "Credencial não enviada." });
+
+    // 📌 Verifica token vindo do Google
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, name, email, picture } = payload;
+
+    // 📌 Procura usuário por e-mail
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // ▶ Criar usuário automaticamente
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar: picture,
+        verify_email: true,
+      });
+    } else if (!user.googleId) {
+      // ▶ Usuário existe mas não tem googleId → vincula agora
+      user.googleId = googleId;
+      await user.save();
+    }
+
+    const token = generateToken(user._id);
+
+    res
+      .cookie("token", token, cookieOptions)
+      .json({ success: true, user: user.toJSON() });
+  } catch (err) {
+    console.error("🔥 Erro no Google OAuth:", err);
+    res.status(500).json({ message: "Erro ao autenticar com Google." });
+  }
 };
 
 export const registerUser = async (req, res) => {

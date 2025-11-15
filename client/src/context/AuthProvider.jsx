@@ -5,9 +5,9 @@ export const AuthContext = createContext(null);
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // carregamento inicial
+  const [loading, setLoading] = useState(true);
 
-  /** LOGIN */
+  /** LOGIN normal */
   const login = async (email, password) => {
     try {
       const res = await AuthService.login(email, password);
@@ -16,9 +16,17 @@ const AuthProvider = ({ children }) => {
         return true;
       }
       return false;
-    } catch (err) {
-      console.error("Erro no login:", err);
+    } catch {
       return false;
+    }
+  };
+
+  /** LOGOUT */
+  const logout = async () => {
+    try {
+      await AuthService.logout();
+    } finally {
+      setUser(null);
     }
   };
 
@@ -37,35 +45,27 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  /** LOGOUT */
-  const logout = async () => {
+  /** CHECA SE HÁ USUÁRIO LOGADO via cookie HttpOnly */
+  const checkAuth = async () => {
     try {
-      await AuthService.logout(); // limpa cookie no servidor
-    } catch (err) {
-      console.warn("Erro ao fazer logout:", err);
-    } finally {
+      const res = await AuthService.getProfile();
+      if (res?.user) setUser(res.user);
+      else setUser(null);
+    } catch {
       setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  /** AUTOLOGIN via cookie httpOnly */
+  /** AUTOLOGIN no mount */
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await AuthService.getProfile(); // cookie enviado automaticamente
-        if (res?.user) setUser(res.user);
-      } catch (err) {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
+    checkAuth();
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, loading, login, register, logout }}
+      value={{ user, setUser, loading, login, logout, register, checkAuth }}
     >
       {children}
     </AuthContext.Provider>

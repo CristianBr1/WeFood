@@ -24,9 +24,17 @@ const userSchema = new mongoose.Schema(
     // 🔹 Senha criptografada
     password: {
       type: String,
-      required: [true, "A senha é obrigatória."],
+      required: function () {
+        // Senha é obrigatória apenas para usuários que NÃO são Google
+        return !this.googleId;
+      },
       minlength: [6, "A senha deve ter no mínimo 6 caracteres."],
-      select: false, // não retorna por padrão nas queries
+      select: false,
+    },
+
+    googleId: {
+      type: String,
+      default: null,
     },
 
     // 🔹 Avatar do usuário (URL)
@@ -124,7 +132,9 @@ const userSchema = new mongoose.Schema(
 // 🔐 Criptografa a senha antes de salvar
 //
 userSchema.pre("save", async function (next) {
+  if (!this.password) return next();
   if (!this.isModified("password")) return next();
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
@@ -167,7 +177,6 @@ userSchema.methods.toJSON = function () {
 userSchema.virtual("isAdmin").get(function () {
   return this.role === "ADMIN";
 });
-
 
 const User = mongoose.model("User", userSchema);
 export default User;

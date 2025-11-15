@@ -1,6 +1,6 @@
 export const DELIVERY_FEES = {
   SERVICE_FEE: 0.99,
-  BASE_DELIVERY_FEE: 8.99,
+  BASE_DELIVERY_FEE: 5.00,
 };
 
 export const calculateDeliveryFees = (pickup = false) => ({

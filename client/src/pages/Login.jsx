@@ -1,31 +1,59 @@
-import { useState, useContext, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ThemeContext } from "../context/ThemeProvider";
+import { useEffect, useState, useContext } from "react";
+import { useNavigate, useSearchParams, Link, Navigate } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { ThemeContext } from "../context/ThemeProvider";
+import Navbar from "../components/Navbar";
+import { API_URL } from "../services/config";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { FcGoogle } from "react-icons/fc";
-import Navbar from "../components/Navbar";
 
 const Login = () => {
   const { darkMode } = useContext(ThemeContext);
-  
-  const { login, user } = useAuthContext();
+  const { user, login, checkAuth } = useAuthContext();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isShowPassword, setIsShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
+  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
-    if (user) navigate("/");
-  }, [user, navigate]);
+    const init = async () => {
+      await checkAuth();
+      setAuthChecked(true);
+    };
+    init();
+
+    // Popstate: força checagem se usuário voltar durante OAuth
+    const handlePopState = async () => {
+      await checkAuth();
+      // Se não estiver logado, garante que fique em /login
+      if (!user) navigate("/login", { replace: true });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [checkAuth, navigate, user]);
+
+  /** Redireciona se logado */
+  useEffect(() => {
+    if (authChecked && user) {
+      navigate("/", { replace: true });
+    }
+  }, [authChecked, user, navigate]);
+
+  /** Callback do Google */
+  useEffect(() => {
+    if (searchParams.get("google") === "success") {
+      checkAuth().then(() => navigate("/", { replace: true }));
+    }
+  }, [searchParams, checkAuth, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,16 +66,22 @@ const Login = () => {
     if (password.trim().length < 6)
       return setError("A senha deve ter no mínimo 6 caracteres.");
 
-    setLoading(true);
+    setFormLoading(true);
     try {
       const success = await login(email, password);
-      if (success) navigate("/");
+      if (success) navigate("/", { replace: true });
       else setError("E-mail ou senha inválidos!");
     } catch {
       setError("Erro ao tentar logar. Tente novamente.");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    // Guarda a página atual para histórico
+    sessionStorage.setItem("preOAuthPage", window.location.pathname);
+    window.location.href = `${API_URL}/auth/google`;
   };
 
   const outlinedSx = {
@@ -74,7 +108,7 @@ const Login = () => {
         className="min-h-screen flex items-center justify-center transition-colors"
         style={{
           background: darkMode ? "#0f1724" : "#f3f4f6",
-          paddingTop: "80px", // espaçamento abaixo da navbar
+          paddingTop: "80px",
         }}
       >
         <div
@@ -187,7 +221,7 @@ const Login = () => {
             <Button
               variant="contained"
               type="submit"
-              disabled={loading}
+              disabled={formLoading}
               sx={{
                 backgroundColor: "#16a34a",
                 "&:hover": { backgroundColor: "#10b981" },
@@ -195,7 +229,7 @@ const Login = () => {
                 fontWeight: 600,
               }}
             >
-              {loading ? "Entrando..." : "Entrar"}
+              {formLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
 
@@ -226,6 +260,7 @@ const Login = () => {
               variant="outlined"
               fullWidth
               startIcon={<FcGoogle />}
+              onClick={handleGoogleLogin}
               sx={{
                 borderColor: "#e5e7eb",
                 color: darkMode ? "#fff" : "#111827",

@@ -10,6 +10,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 // Rotas
+
+import passport from "./config/passport.js";
 import userRoutes from "./routes/user.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import testRoutes from "./routes/test.routes.js";
@@ -22,8 +24,7 @@ import addressRoutes from "./routes/address.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import seedHamburgersRoute from "./routes/seedHamburgers.js";
 import paymentRoutes from "./routes/payment.routes.js";
-import stripeWebhookRoutes from "./routes/stripeWebhook.routes.js";
-import stripeTestWebhook from "./routes/stripeTestWebhook.routes.js";
+import googleAuthRoutes from "./routes/googleAuth.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,6 +42,8 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+
+app.use(passport.initialize());
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -83,14 +86,11 @@ app.use("/api/test", testRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/store", storeRoutes);
+app.use("/api/auth/google", googleAuthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api", seedHamburgersRoute);
 app.use("/api/payments", paymentRoutes);
-app.use("/webhook-test", stripeTestWebhook);
-
-// Stripe webhook deve vir **antes de express.json()**, com raw body
-app.use("/api/payments/webhook", stripeWebhookRoutes);
 
 // ---------------------
 // Teste de rota
