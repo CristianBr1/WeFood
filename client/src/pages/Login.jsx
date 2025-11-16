@@ -1,9 +1,9 @@
 import { useEffect, useState, useContext } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { ThemeContext } from "../context/ThemeProvider";
 import Navbar from "../components/Navbar";
-import { API_URL } from "../services/config";
+import { GoogleLogin } from "@react-oauth/google";
 
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
@@ -15,8 +15,7 @@ import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const { darkMode } = useContext(ThemeContext);
-  const { user, login, checkAuth } = useAuthContext();
-  const [searchParams] = useSearchParams();
+  const { user, login, checkAuth, loginWithGoogle } = useAuthContext();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -27,7 +26,7 @@ const Login = () => {
   const [authChecked, setAuthChecked] = useState(false);
 
   // =============================
-  // 1️⃣ Autologin + evitar login indevido
+  // 1️⃣ Verifica login automático
   // =============================
   useEffect(() => {
     const init = async () => {
@@ -37,7 +36,7 @@ const Login = () => {
     init();
   }, []);
 
-  // Se já estiver autenticado → manda pra home
+  // Se já estiver logado → redireciona
   useEffect(() => {
     if (authChecked && user) {
       navigate("/", { replace: true });
@@ -45,16 +44,7 @@ const Login = () => {
   }, [authChecked, user, navigate]);
 
   // =============================
-  // 2️⃣ Callback do Google (google=success)
-  // =============================
-  useEffect(() => {
-    if (searchParams.get("google") === "success") {
-      checkAuth().then(() => navigate("/", { replace: true }));
-    }
-  }, [searchParams, checkAuth, navigate]);
-
-  // =============================
-  // 3️⃣ Login normal
+  // 2️⃣ Login normal
   // =============================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,13 +70,8 @@ const Login = () => {
   };
 
   // =============================
-  // 4️⃣ Login Google
+  // Estilo dos inputs do MUI
   // =============================
-  const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/auth/google`;
-  };
-
-  // Inputs estilizados
   const outlinedSx = {
     "& .MuiOutlinedInput-root": {
       backgroundColor: darkMode ? "#374151" : "#ffffff",
@@ -252,11 +237,10 @@ const Login = () => {
             </Link>
           </p>
 
-          {/* GOOGLE */}
-          <div style={{ marginTop: 14 }}>
+          {/* GOOGLE LOGIN */}
+          <div style={{ marginTop: 14, textAlign: "center" }}>
             <div
               style={{
-                textAlign: "center",
                 marginBottom: 8,
                 color: darkMode ? "#9ca3af" : "#6b7280",
               }}
@@ -264,23 +248,26 @@ const Login = () => {
               OU
             </div>
 
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<FcGoogle />}
-              onClick={handleGoogleLogin}
-              sx={{
-                borderColor: "#e5e7eb",
-                color: darkMode ? "#fff" : "#111827",
-                backgroundColor: darkMode ? "#111827" : "#f8fafc",
-                "&:hover": {
-                  backgroundColor: darkMode ? "#0b1220" : "#f1f5f9",
-                },
-                textTransform: "none",
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                try {
+                  const credential = credentialResponse.credential;
+
+                  const ok = await loginWithGoogle(credential);
+                  if (ok) {
+                    navigate("/", { replace: true });
+                  } else {
+                    setError("Falha ao fazer login com o Google.");
+                  }
+                } catch (error) {
+                  console.error("Erro no login Google:", error);
+                  setError("Erro ao tentar login com Google.");
+                }
               }}
-            >
-              Login com o Google
-            </Button>
+              onError={() => {
+                setError("Erro ao tentar login com Google.");
+              }}
+            />
           </div>
         </div>
       </section>

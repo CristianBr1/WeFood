@@ -24,7 +24,7 @@ const AuthProvider = ({ children }) => {
   /** LOGIN via Google OAuth */
   const loginWithGoogle = async (credential) => {
     try {
-      const res = await AuthService.google(credential);
+      const res = await AuthService.googleLogin(credential); // <-- CORRIGIDO
       if (res?.user) {
         setUser(res.user);
         return true;

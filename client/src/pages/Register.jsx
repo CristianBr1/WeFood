@@ -8,12 +8,15 @@ import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import Navbar from "../components/Navbar";
-import { API_URL } from "../services/config";
+import { GoogleLogin } from "@react-oauth/google";
 import { FcGoogle } from "react-icons/fc";
 
 const Register = () => {
   const { darkMode } = useContext(ThemeContext);
-  const { register, user, checkAuth } = useAuthContext();
+  const { register, loginWithGoogle, user, checkAuth } = useAuthContext(); // ✅ loginWithGoogle do provider
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,9 +24,6 @@ const Register = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   // Redireciona se já estiver logado
   useEffect(() => {
@@ -40,13 +40,16 @@ const Register = () => {
     }
   }, [authChecked, user, navigate]);
 
-  // Callback do Google OAuth
+  // Callback Google OAuth
   useEffect(() => {
     if (searchParams.get("google") === "success") {
       checkAuth().then(() => navigate("/", { replace: true }));
     }
   }, [searchParams, checkAuth, navigate]);
 
+  // ================================
+  // 1️⃣ Registro normal
+  // ================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -69,10 +72,19 @@ const Register = () => {
     }
   };
 
-  const handleGoogleRegister = () => {
-    // Guarda página atual para histórico
-    sessionStorage.setItem("preOAuthPage", window.location.pathname);
-    window.location.href = `${API_URL}/auth/google`;
+  // ================================
+  // 2️⃣ Registro / login Google
+  // ================================
+  const handleGoogleRegister = async (credential) => {
+    setError("");
+    try {
+      const success = await loginWithGoogle(credential); // ✅ chama provider
+      if (success) navigate("/", { replace: true });
+      else setError("Falha ao registrar com Google.");
+    } catch (err) {
+      console.error("Erro no Google OAuth:", err);
+      setError("Falha ao registrar com Google.");
+    }
   };
 
   const outlinedSx = {
@@ -216,31 +228,19 @@ const Register = () => {
           </Link>
         </p>
 
-        <div style={{ marginTop: 14 }}>
+        {/* GOOGLE LOGIN */}
+        <div style={{ marginTop: 14, textAlign: "center" }}>
           <div
-            style={{
-              textAlign: "center",
-              marginBottom: 8,
-              color: darkMode ? "#9ca3af" : "#6b7280",
-            }}
+            style={{ marginBottom: 8, color: darkMode ? "#9ca3af" : "#6b7280" }}
           >
             OU
           </div>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={<FcGoogle />}
-            onClick={handleGoogleRegister}
-            sx={{
-              borderColor: "#e5e7eb",
-              color: darkMode ? "#fff" : "#111827",
-              backgroundColor: darkMode ? "#111827" : "#f8fafc",
-              "&:hover": { backgroundColor: darkMode ? "#0b1220" : "#f1f5f9" },
-              textTransform: "none",
-            }}
-          >
-            Registrar com Google
-          </Button>
+          <GoogleLogin
+            onSuccess={(credentialResponse) =>
+              handleGoogleRegister(credentialResponse.credential)
+            }
+            onError={() => setError("Erro ao tentar login com Google.")}
+          />
         </div>
       </div>
     </section>

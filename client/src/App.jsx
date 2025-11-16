@@ -5,8 +5,10 @@ import ThemeProvider from "./context/ThemeProvider";
 import SearchProvider from "./context/SearchProvider";
 import AddressProvider from "./context/AddressProvider";
 import Routes from "./routes/Routes";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const App = () => (
+  <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
   <BrowserRouter>
     <AuthProvider>
       <CartProvider>
@@ -20,6 +22,7 @@ const App = () => (
       </CartProvider>
     </AuthProvider>
   </BrowserRouter>
+  </GoogleOAuthProvider>
 );
 
 export default App;

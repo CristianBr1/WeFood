@@ -10,8 +10,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 // Rotas
-
-// import passport from "./config/passport.js";
 import userRoutes from "./routes/user.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import testRoutes from "./routes/test.routes.js";
@@ -24,18 +22,20 @@ import addressRoutes from "./routes/address.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import seedHamburgersRoute from "./routes/seedHamburgers.js";
 import paymentRoutes from "./routes/payment.routes.js";
-// import googleAuthRoutes from "./routes/googleAuth.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const PORT = process.env.PORT || 8000;
+const isProd = process.env.NODE_ENV === "production";
 
-// ---------------------
-// Middlewares globais
-// ---------------------
+/* ====================================
+   🛡️ Middleware Globais
+==================================== */
 app.use(cookieParser());
 app.use(morgan("combined"));
+
 app.use(
   helmet({
     crossOriginEmbedderPolicy: false,
@@ -43,8 +43,10 @@ app.use(
   })
 );
 
-// app.use(passport.initialize());
-
+/* ====================================
+   🌍 CORS — ESSA CONFIG ESTÁ CERTA
+   Aceita cookies cross-site no PROD
+==================================== */
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -57,27 +59,33 @@ app.use(
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      console.log("❌ Origin bloqueada:", origin);
       return callback(new Error("Origin não permitido pelo CORS"), false);
     },
     credentials: true,
   })
 );
 
-// 🔹 Rota para arquivos públicos
+/* ====================================
+   📁 Arquivos públicos
+==================================== */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 🔹 Body parser para JSON exceto webhook
+/* ====================================
+   🧩 Body Parser (Stripe)
+==================================== */
 app.use((req, res, next) => {
   if (req.originalUrl === "/api/payments/webhook") {
-    next(); // stripe precisa de raw body
+    next(); // Stripe usa raw body
   } else {
     express.json()(req, res, next);
   }
 });
 
-// ---------------------
-// Rotas
-// ---------------------
+/* ====================================
+   🚏 Rotas da API
+==================================== */
 app.use("/api/users", userRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/products", productRoutes);
@@ -86,23 +94,24 @@ app.use("/api/test", testRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/store", storeRoutes);
-// app.use("/api/auth/google", googleAuthRoutes);
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes); // Google OAuth está aqui
 app.use("/api/cart", cartRoutes);
 app.use("/api", seedHamburgersRoute);
 app.use("/api/payments", paymentRoutes);
 
-// ---------------------
-// Teste de rota
-// ---------------------
-const PORT = process.env.PORT || 8000;
+/* ====================================
+   🔍 Rota de teste
+==================================== */
 app.get("/", (req, res) => {
-  res.json({ message: `✅ Server está rodando na porta ${PORT}` });
+  res.json({
+    message: `✅ Server está rodando na porta ${PORT}`,
+    environment: isProd ? "PRODUÇÃO" : "LOCALHOST",
+  });
 });
 
-// ---------------------
-// Conectar ao MongoDB e iniciar servidor
-// ---------------------
+/* ====================================
+   🚀 Inicializar Servidor
+==================================== */
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
