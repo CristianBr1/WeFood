@@ -6,9 +6,6 @@ import { fetchData, postData } from "../apiService";
 export const AuthService = {
   /**
    * 🔹 Registrar novo usuário
-   * @param {string} name
-   * @param {string} email
-   * @param {string} password
    */
   register: async (name, email, password) => {
     const payload = { name, email, password };
@@ -16,9 +13,7 @@ export const AuthService = {
   },
 
   /**
-   * 🔹 Login do usuário
-   * @param {string} email
-   * @param {string} password
+   * 🔹 Login normal
    */
   login: async (email, password) => {
     const payload = { email, password };
@@ -26,33 +21,36 @@ export const AuthService = {
   },
 
   /**
-   * 🔹 Logout (limpa cookie httpOnly no servidor)
+   * 🔹 Login via Google OAuth
+   */
+  googleLogin: async (credential) => {
+    return await postData("/auth/google", { credential });
+  },
+
+  /**
+   * 🔹 Logout — limpa cookie no backend
    */
   logout: async () => {
     return await postData("/auth/logout");
   },
 
   /**
-   * 🔹 Obter perfil do usuário logado
-   * (usa cookie httpOnly automaticamente)
+   * 🔹 Obtém o usuário logado via cookie httpOnly
+   * (rota real do backend)
    */
   getProfile: async () => {
-    return await fetchData("/users/profile");
+    return await fetchData("/auth/check");
   },
 
   /**
-   * 🔹 Esqueci minha senha — envia OTP por e-mail
-   * @param {string} email
+   * 🔹 Envia OTP para recuperar senha
    */
   sendResetPasswordOTP: async (email) => {
     return await postData("/auth/forgot-password", { email });
   },
 
   /**
-   * 🔹 Redefinir senha usando OTP
-   * @param {string} email
-   * @param {string} otp
-   * @param {string} newPassword
+   * 🔹 Redefine a senha usando OTP
    */
   resetPassword: async (email, otp, newPassword) => {
     return await postData("/auth/reset-password", {

@@ -27,7 +27,7 @@ export default function Checklist() {
         { text: "Autenticação JWT e middleware de admin", done: true },
         { text: "Endpoints protegidos para CRUD de produtos", done: true },
         { text: "Controle de estoque e decremento automático", done: false },
-        { text: "Integração com pagamentos (real)", done: false },
+        { text: "Integração com pagamentos (real)", done: true },
       ],
     },
 
@@ -40,6 +40,7 @@ export default function Checklist() {
         { text: "Setup com Vite + React + Tailwind", done: true },
         { text: "Tela inicial com banners e produtos", done: true },
         { text: "Sistema de login / registro com JWT", done: true },
+        { text: "Sistema de login / registro com Google", done: true },
         { text: "Carrinho de compras e checkout", done: true },
         { text: "Endereços e seleção de entrega", done: true },
         { text: "Confirmação de pedido e acompanhamento", done: true },
@@ -229,7 +230,7 @@ export default function Checklist() {
                         )}
                         <span
                           className={`${
-                            item.done ? "line-through text-gray-400" : "text-gray-700"
+                            item.done ? "line-through  text-gray-400" : "text-gray-700"
                           }`}
                         >
                           {item.text}

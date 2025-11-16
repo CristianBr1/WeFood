@@ -92,13 +92,11 @@ const Orders = () => {
         order.pickup
           ? "Retirada no local"
           : order.delivery_address
-          ? `${order.delivery_address.address_line}, nº ${
-              order.delivery_address.number || "s/n"
-            }, ${order.delivery_address.neighborhood || ""}, ${
+          ? `${order.delivery_address.address_line}, ${
+              order.delivery_address.number
+            } - ${order.delivery_address.neighborhood || ""}, ${
               order.delivery_address.city
-            } - ${order.delivery_address.state}, CEP: ${
-              order.delivery_address.pincode
-            }`
+            } - CEP: ${order.delivery_address.pincode}`
           : "Não informado"
       }</p>`
     );
@@ -216,13 +214,9 @@ const Orders = () => {
                     {order.pickup
                       ? "Retirada no local"
                       : order.delivery_address
-                      ? `${order.delivery_address.address_line}, nº ${
-                          order.delivery_address.number || "s/n"
-                        }, ${order.delivery_address.neighborhood || ""}, ${
+                      ? `${order.delivery_address.address_line} - ${order.delivery_address.neighborhood || ""}, ${
                           order.delivery_address.city
-                        } - ${order.delivery_address.state}, CEP: ${
-                          order.delivery_address.pincode
-                        }`
+                        } - CEP: ${order.delivery_address.pincode}`
                       : "Não informado"}
                   </p>
                   <p>
@@ -232,6 +226,10 @@ const Orders = () => {
                   <p>
                     <strong>Data:</strong>{" "}
                     {new Date(order.createdAt).toLocaleString("pt-BR")}
+                  </p>
+                      <p>
+                    <strong>Status:</strong>{" "}
+                    {order.payment_status}
                   </p>
                 </div>
 

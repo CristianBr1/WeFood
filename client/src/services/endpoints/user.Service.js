@@ -1,36 +1,30 @@
-import { fetchData, putData, postData } from "../apiService";
-import { uploadFormData } from "../uploadService";
+import { fetchData, postData } from "../apiService";
 
 /** ====================
  *  👤 UserService
  * ==================== */
 export const UserService = {
   /**
-   * 🔹 Retorna o perfil do usuário logado
-   * @param {string} [token]
+   * 🔹 Obter o perfil do usuário logado
+   * Usa cookie httpOnly automaticamente
    */
-  getProfile: (token) => fetchData("/users/profile", {}, token),
+  getProfile: () => fetchData("/auth/check"),
 
   /**
-   * 🔹 Atualiza dados do perfil do usuário
-   * @param {object} payload - Exemplo: { name, mobile }
-   * @param {string} [token]
+   * 🔹 Atualizar nome, email ou mobile
+   * (necessita que você CRIE a rota PUT /users/profile)
    */
-  updateProfile: (payload, token) => putData("/users/profile", payload, token),
+  updateProfile: (payload) => postData("/users/profile?_method=PUT", payload),
 
   /**
-   * 🔹 Atualiza avatar do usuário
-   * @param {FormData} formData - Deve conter { avatar: File }
-   * @param {string} [token]
+   * 🔹 Atualizar avatar do usuário
+   * (necessita rota POST /users/profile/avatar)
    */
-  updateAvatar: (formData, token) =>
-    uploadFormData("/users/profile/avatar", formData, token),
+  updateAvatar: (formData) => postData("/users/profile/avatar", formData, true), // true = multipart/form-data
 
   /**
-   * 🔹 Atualização parcial (patch) — útil para mudar apenas um campo
-   * @param {object} payload - Ex: { mobile: "99999-0000" }
-   * @param {string} [token]
+   * 🔹 Atualização parcial via PATCH
+   * (também exige PATCH /users/profile)
    */
-  patchProfile: (payload, token) =>
-    postData("/users/profile?_method=PATCH", payload, token),
+  patchProfile: (payload) => postData("/users/profile?_method=PATCH", payload),
 };

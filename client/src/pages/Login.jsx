@@ -1,20 +1,21 @@
 import { useEffect, useState, useContext } from "react";
-import { useNavigate, useSearchParams, Link, Navigate } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { ThemeContext } from "../context/ThemeProvider";
 import Navbar from "../components/Navbar";
 import { API_URL } from "../services/config";
+
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
+
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const { darkMode } = useContext(ThemeContext);
   const { user, login, checkAuth } = useAuthContext();
-  const [authChecked, setAuthChecked] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -23,38 +24,38 @@ const Login = () => {
   const [isShowPassword, setIsShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
+  // =============================
+  // 1️⃣ Autologin + evitar login indevido
+  // =============================
   useEffect(() => {
     const init = async () => {
       await checkAuth();
       setAuthChecked(true);
     };
     init();
+  }, []);
 
-    // Popstate: força checagem se usuário voltar durante OAuth
-    const handlePopState = async () => {
-      await checkAuth();
-      // Se não estiver logado, garante que fique em /login
-      if (!user) navigate("/login", { replace: true });
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [checkAuth, navigate, user]);
-
-  /** Redireciona se logado */
+  // Se já estiver autenticado → manda pra home
   useEffect(() => {
     if (authChecked && user) {
       navigate("/", { replace: true });
     }
   }, [authChecked, user, navigate]);
 
-  /** Callback do Google */
+  // =============================
+  // 2️⃣ Callback do Google (google=success)
+  // =============================
   useEffect(() => {
     if (searchParams.get("google") === "success") {
       checkAuth().then(() => navigate("/", { replace: true }));
     }
   }, [searchParams, checkAuth, navigate]);
 
+  // =============================
+  // 3️⃣ Login normal
+  // =============================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -78,12 +79,14 @@ const Login = () => {
     }
   };
 
+  // =============================
+  // 4️⃣ Login Google
+  // =============================
   const handleGoogleLogin = () => {
-    // Guarda a página atual para histórico
-    sessionStorage.setItem("preOAuthPage", window.location.pathname);
     window.location.href = `${API_URL}/auth/google`;
   };
 
+  // Inputs estilizados
   const outlinedSx = {
     "& .MuiOutlinedInput-root": {
       backgroundColor: darkMode ? "#374151" : "#ffffff",
@@ -104,6 +107,7 @@ const Login = () => {
   return (
     <>
       <Navbar />
+
       <section
         className="min-h-screen flex items-center justify-center transition-colors"
         style={{
@@ -146,6 +150,7 @@ const Login = () => {
             </p>
           )}
 
+          {/* FORM */}
           <form
             onSubmit={handleSubmit}
             style={{
@@ -233,6 +238,7 @@ const Login = () => {
             </Button>
           </form>
 
+          {/* Separador */}
           <p
             style={{
               textAlign: "center",
@@ -246,6 +252,7 @@ const Login = () => {
             </Link>
           </p>
 
+          {/* GOOGLE */}
           <div style={{ marginTop: 14 }}>
             <div
               style={{
@@ -256,6 +263,7 @@ const Login = () => {
             >
               OU
             </div>
+
             <Button
               variant="outlined"
               fullWidth

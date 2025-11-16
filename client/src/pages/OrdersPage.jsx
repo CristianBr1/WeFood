@@ -42,7 +42,7 @@ const Orders = () => {
         sx={{
           minHeight: "100vh",
           alignItems: "center",
-          px: { xs: 2, md: 40, },
+          px: { xs: 2, md: 40 },
           justifyContent: "center",
           backgroundColor: darkMode ? "#111" : "#f5f5f5",
           pt: "64px",
@@ -120,9 +120,11 @@ const Orders = () => {
               <Box sx={{ mb: 1 }}>
                 <Typography variant="subtitle2">Entrega para:</Typography>
                 <Typography>
-                  {order.delivery_address.address_line} -{" "}
-                  {order.delivery_address.city}, {order.delivery_address.state}{" "}
-                  - CEP: {order.delivery_address.pincode}
+                  {order.delivery_address.address_line}{" "}
+                  {order.delivery_address.number} - {" "}
+                  {order.delivery_address.neighborhood},{" "}
+                  {order.delivery_address.city} - CEP:{" "}
+                  {order.delivery_address.pincode}
                 </Typography>
               </Box>
             ) : (

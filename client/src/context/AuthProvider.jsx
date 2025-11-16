@@ -21,12 +21,27 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  /** LOGIN via Google OAuth */
+  const loginWithGoogle = async (credential) => {
+    try {
+      const res = await AuthService.google(credential);
+      if (res?.user) {
+        setUser(res.user);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Erro no Google OAuth:", err);
+      return false;
+    }
+  };
+
   /** LOGOUT */
   const logout = async () => {
     try {
       await AuthService.logout();
     } finally {
-      setUser(null);
+      await checkAuth(); // força atualizar usuário
     }
   };
 
@@ -65,7 +80,16 @@ const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, loading, login, logout, register, checkAuth }}
+      value={{
+        user,
+        setUser,
+        loading,
+        login,
+        loginWithGoogle,
+        logout,
+        register,
+        checkAuth,
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -73,4 +97,5 @@ const AuthProvider = ({ children }) => {
 };
 
 export default AuthProvider;
+
 export const useAuthContext = () => useContext(AuthContext);

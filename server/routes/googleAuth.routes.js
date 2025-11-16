@@ -39,8 +39,9 @@ router.get(
     // cria cookie httpOnly
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // HTTPS obrigatório
-      sameSite: "none", // para funcionar entre domínios
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      path: "/", // ← ADICIONE
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 

@@ -1,128 +1,152 @@
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
+import bcrypt from "bcryptjs";
+import axios from "axios";
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const JWT_SECRET = process.env.JWT_SECRET;
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
-const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  path: "/",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
+// =======================
+//   GERAR TOKEN
+// =======================
+const createToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+    },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 };
 
-/* ============================================================
-   🔵 GOOGLE OAUTH LOGIN
-============================================================ */
-export const googleOAuth = async (req, res) => {
-  try {
-    const { credential } = req.body;
-
-    if (!credential)
-      return res.status(400).json({ message: "Credencial não enviada." });
-
-    // 📌 Verifica token vindo do Google
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const { sub: googleId, name, email, picture } = payload;
-
-    // 📌 Procura usuário por e-mail
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      // ▶ Criar usuário automaticamente
-      user = await User.create({
-        name,
-        email,
-        googleId,
-        avatar: picture,
-        verify_email: true,
-      });
-    } else if (!user.googleId) {
-      // ▶ Usuário existe mas não tem googleId → vincula agora
-      user.googleId = googleId;
-      await user.save();
-    }
-
-    const token = generateToken(user._id);
-
-    res
-      .cookie("token", token, cookieOptions)
-      .json({ success: true, user: user.toJSON() });
-  } catch (err) {
-    console.error("🔥 Erro no Google OAuth:", err);
-    res.status(500).json({ message: "Erro ao autenticar com Google." });
-  }
-};
-
+// =======================
+//   REGISTER
+// =======================
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    if (!name || !email || !password)
-      return res.status(400).json({ message: "Preencha todos os campos." });
 
-    if (await User.findOne({ email }))
-      return res.status(400).json({ message: "E-mail já cadastrado." });
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ message: "E-mail já existe." });
 
-    const user = await User.create({ name, email, password });
-    const token = generateToken(user._id);
-
-    res.status(201).cookie("token", token, cookieOptions).json({
-      success: true,
-      user,
-      message: "Registro concluído com sucesso.",
+    const newUser = await User.create({
+      name,
+      email,
+      password, // 🔥 DEIXA O SCHEMA FAZER O HASH
     });
+
+    const token = createToken(newUser);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+    });
+
+    res.json({ message: "Registrado com sucesso!", user: newUser });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro interno do servidor." });
+    res.status(500).json({ message: "Erro ao registrar" });
   }
 };
 
+// =======================
+//   LOGIN NORMAL
+// =======================
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email }).select("+password");
+    if (!user)
+      return res.status(400).json({ message: "Usuário não encontrado." });
 
-    if (!user || !(await user.matchPassword(password)))
-      return res.status(401).json({ message: "Credenciais inválidas." });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ message: "Senha incorreta." });
 
-    const token = generateToken(user._id);
-    res.cookie("token", token, cookieOptions).json({
-      success: true,
-      user,
-      message: "Login realizado com sucesso.",
+    const token = createToken(user);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax", // 🔥 FUNCIONA EM LOCALHOST
+      secure: false, // 🔥 localhost NÃO aceita secure:true
+    });
+
+    return res.json({
+      message: "Login realizado!",
+      user: user.toJSON(),
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro interno do servidor." });
+    console.error("Erro no loginUser:", err);
+    return res.status(500).json({ message: "Erro ao logar" });
   }
 };
 
-export const logoutUser = async (req, res) => {
+// =======================
+//   LOGIN COM GOOGLE
+// =======================
+export const googleOAuth = async (req, res) => {
   try {
-    res.clearCookie("token", { ...cookieOptions, maxAge: 0 });
-    res.json({ success: true, message: "Logout realizado com sucesso." });
+    const { credential } = req.body; // token do Google (frontend)
+
+    // 1) Validar token no Google
+    const response = await axios.get(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
+    );
+
+    const data = response.data;
+
+    if (data.aud !== CLIENT_ID) {
+      return res.status(400).json({ message: "Token inválido." });
+    }
+
+    // 2) Verificar se usuário existe
+    let user = await User.findOne({ email: data.email });
+
+    // 3) Criar se não existir
+    if (!user) {
+      user = await User.create({
+        name: data.name,
+        email: data.email,
+        avatar: data.picture,
+        password: null, // usuário Google não tem senha
+      });
+    }
+
+    // 4) Gerar JWT
+    const token = createToken(user);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+    });
+
+    res.json({ message: "Google login OK", user });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro interno do servidor." });
+    res.status(500).json({ message: "Erro no login Google" });
   }
 };
 
+// =======================
+//   PERFIL
+// =======================
 export const getUserProfile = async (req, res) => {
   try {
-    res.json({ success: true, user: req.user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro interno do servidor." });
+    const user = await User.findById(req.user.id).select("-password");
+    res.json({ user });
+  } catch {
+    res.status(500).json({ message: "Erro ao buscar perfil" });
   }
+};
+
+// =======================
+//   LOGOUT
+// =======================
+export const logoutUser = async (req, res) => {
+  res.clearCookie("token");
+  res.json({ message: "Logout feito!" });
 };
 
 /** =====================================

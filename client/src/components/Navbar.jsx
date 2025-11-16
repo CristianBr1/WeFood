@@ -141,11 +141,7 @@ useEffect(() => {
               Cardápio
             </Link>
           </li>
-          <li>
-            <Link to="/sobre" style={{ color: "inherit" }}>
-              Sobre Nós
-            </Link>
-          </li>
+
              <li>
             <Link to="/checklist" style={{ color: "inherit" }}>
               Próximos Passos
