@@ -8,6 +8,7 @@ import { RiProductHuntLine, RiStackFill } from "react-icons/ri";
 import { TbCategory } from "react-icons/tb";
 import { IoBagCheckOutline } from "react-icons/io5";
 import { IoMdLogOut } from "react-icons/io";
+import { GoGear } from "react-icons/go";
 import { Collapse } from "react-collapse";
 import Button from "@mui/material/Button";
 import logo from "../assets/logo.png";
@@ -57,6 +58,7 @@ const Sidebars = ({ isOpen, onForceOpen, onClose }) => {
 
   const menuItems = [
     { icon: <RxDashboard />, label: "Dashboard", path: "/dashboard" },
+    { icon: <GoGear />, label: "Configurações", path: "/configuracoes" },
     {
       icon: <FaRegImage />,
       label: "Banners da Home",

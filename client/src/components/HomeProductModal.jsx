@@ -3,8 +3,10 @@ import { getImageUrl } from "../services/config";
 import { ThemeContext } from "../context/ThemeProvider";
 import { useCartContext } from "../hooks/useCartContext";
 import { useProducts } from "../hooks/useProducts";
+
 import CloseIcon from "@mui/icons-material/Close";
 import { Button, IconButton, CircularProgress } from "@mui/material";
+
 import "../styles/ProductModal.css";
 
 const HomeProductModal = ({ product: initialProduct, onClose }) => {
@@ -14,12 +16,17 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
 
   const [product, setProduct] = useState(null);
   const [productLoading, setProductLoading] = useState(true);
+
   const [selectedExtras, setSelectedExtras] = useState([]);
   const [meatCount, setMeatCount] = useState(1);
   const [productQuantity, setProductQuantity] = useState(1);
   const [observations, setObservations] = useState("");
 
-  // Reset e fetch completo
+  const [adding, setAdding] = useState(false);
+
+  // ---------------------------
+  // BUSCAR PRODUTO COMPLETO
+  // ---------------------------
   useEffect(() => {
     let mounted = true;
 
@@ -29,22 +36,27 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
       try {
         setProductLoading(true);
 
-        if (
+        let fullProduct;
+
+        // Se já veio completo do backend, não precisamos buscar de novo
+        const isFull =
           Array.isArray(initialProduct.extras) &&
-          initialProduct.meatOptions
-        ) {
-          setProduct(initialProduct);
-          setMeatCount(initialProduct.meatOptions.min || 1);
+          (initialProduct.meatOptions || !initialProduct.hasMeat);
+
+        if (isFull) {
+          fullProduct = initialProduct;
         } else {
-          const full = await getProductById(
+          fullProduct = await getProductById(
             initialProduct._id || initialProduct
           );
-          if (mounted) {
-            setProduct(full);
-            setMeatCount(full.meatOptions?.min || 1);
-          }
         }
 
+        if (!mounted) return;
+
+        setProduct(fullProduct);
+        setMeatCount(fullProduct.meatOptions?.min || 1);
+
+        // Reset ao abrir o modal
         setSelectedExtras([]);
         setProductQuantity(1);
         setObservations("");
@@ -56,12 +68,18 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
     };
 
     fetchFullProduct();
+
     return () => {
       mounted = false;
     };
   }, [initialProduct, getProductById]);
 
+  // ---------------------------
+  // TOGGLE DE EXTRA
+  // ---------------------------
   const toggleExtra = (extra) => {
+    if (!extra || typeof extra.price !== "number") return;
+
     setSelectedExtras((prev) =>
       prev.some((e) => e.name === extra.name)
         ? prev.filter((e) => e.name !== extra.name)
@@ -71,27 +89,45 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
 
   if (!product) return null;
 
-  const extrasTotal = selectedExtras.reduce((sum, e) => sum + e.price, 0);
+  // ---------------------------
+  // CÁLCULOS
+  // ---------------------------
+  const extrasTotal = selectedExtras.reduce(
+    (sum, e) => sum + (e.price || 0),
+    0
+  );
+
   const meatExtraPrice =
-    (meatCount - 1) * (product?.meatOptions?.pricePerExtra || 0);
+    product.meatOptions
+      ? (meatCount - 1) * (product.meatOptions?.pricePerExtra || 0)
+      : 0;
+
   const totalPrice =
     (product.price + extrasTotal + meatExtraPrice) * productQuantity;
 
+  // ---------------------------
+  // ADICIONAR AO CARRINHO
+  // ---------------------------
   const handleAdd = async () => {
+    if (adding || productLoading) return;
+
+    setAdding(true);
+
     await addItem({
       productId: product._id,
-      name: product.name,
-      image: product.image,
       quantity: productQuantity,
-      extras: selectedExtras.map((e) => ({ name: e.name, price: e.price })),
+      extras: selectedExtras,
       meatCount,
       observations,
-      price: product.price,
-      totalPrice,
     });
+
+    setAdding(false);
     onClose();
   };
 
+  // ---------------------------
+  // RENDER
+  // ---------------------------
   return (
     <div
       className="modal-overlay"
@@ -111,15 +147,15 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
           position: "relative",
         }}
       >
-        {/* Botão de fechar responsivo */}
+        {/* Botão de fechar */}
         <IconButton
           onClick={onClose}
           size="large"
           sx={{
             position: "absolute",
             top: 10,
-            right: { xs: "50%", md: 10 }, // centraliza em xs e direita em md+
-            transform: { xs: "translateX(50%)", md: "none" }, // ajusta para centro em xs
+            right: { xs: "50%", md: 10 },
+            transform: { xs: "translateX(50%)", md: "none" },
             color: "red",
             backgroundColor: darkMode ? "#333" : "#fff",
             borderRadius: "50%",
@@ -136,6 +172,7 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
         </IconButton>
 
         <div className="modal-contents">
+          {/* IMAGEM */}
           <div className="product-image" style={{ position: "relative" }}>
             {productLoading && (
               <CircularProgress
@@ -148,24 +185,27 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
                 }}
               />
             )}
+
             {!productLoading && (
               <img
                 src={
-                  product.image
-                    ? getImageUrl(product.image)
-                    : "/placeholder.jpg"
+                  Array.isArray(product.image)
+                    ? getImageUrl(product.image[0])
+                    : getImageUrl(product.image)
                 }
                 alt={product.name}
               />
             )}
           </div>
 
+          {/* INFO */}
           {!productLoading && (
             <div className="product-info">
               <div className="modal-header">{product.name}</div>
               <div className="modal-body">
                 <p>{product.description}</p>
 
+                {/* Extras */}
                 {product.extras?.length > 0 && (
                   <div>
                     <h4>Extras</h4>
@@ -184,9 +224,11 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
                   </div>
                 )}
 
+                {/* Carnes */}
                 {product.meatOptions && (
                   <div className="meat-selector">
                     <h4>Quantidade de carnes</h4>
+
                     <Button
                       variant="outlined"
                       size="small"
@@ -198,7 +240,9 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
                     >
                       -
                     </Button>
+
                     <span style={{ margin: "0 8px" }}>{meatCount}</span>
+
                     <Button
                       variant="outlined"
                       size="small"
@@ -210,9 +254,10 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
                     >
                       +
                     </Button>
+
                     {meatCount > 1 && (
                       <p className="extra-meat-price">
-                        + R${" "}
+                        + R$
                         {(
                           product.meatOptions.pricePerExtra *
                           (meatCount - 1)
@@ -222,6 +267,7 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
                   </div>
                 )}
 
+                {/* Observações */}
                 <h4>Observações</h4>
                 <textarea
                   placeholder="Alguma observação sobre o pedido?"
@@ -233,6 +279,7 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
           )}
         </div>
 
+        {/* Rodapé */}
         {!productLoading && (
           <div className="modal-footer">
             <div className="quantity-controls">
@@ -245,7 +292,9 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
               >
                 -
               </Button>
+
               <span>{productQuantity}</span>
+
               <Button
                 variant="outlined"
                 size="small"
@@ -259,9 +308,10 @@ const HomeProductModal = ({ product: initialProduct, onClose }) => {
               className="add-cart-btn"
               variant="contained"
               color="success"
+              disabled={adding}
               onClick={handleAdd}
             >
-              Adicionar R$ {totalPrice.toFixed(2)}
+              {adding ? "Adicionando..." : `Adicionar R$ ${totalPrice.toFixed(2)}`}
             </Button>
           </div>
         )}

@@ -22,26 +22,37 @@ const orderSchema = new mongoose.Schema(
           name: String,
           image: [String],
         },
+
         quantity: {
           type: Number,
           default: 1,
         },
+
         extras: [
           {
             name: String,
             price: Number,
           },
         ],
+
         observations: {
           type: String,
           default: "",
         },
+
+        // 🔹 faltava isso!
+        unitPrice: {
+          type: Number,
+          default: 0,
+        },
+
         totalPrice: {
           type: Number,
           default: 0,
         },
       },
     ],
+
     paymentId: {
       type: String,
       default: "",
@@ -67,10 +78,12 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "Address",
     },
+
     pickup: {
       type: Boolean,
       default: false,
     },
+
     subTotalAmt: {
       type: Number,
       default: 0,
@@ -87,14 +100,13 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
     invoice_receipt: {
       type: String,
       default: "",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const OrderModel = mongoose.model("order", orderSchema);

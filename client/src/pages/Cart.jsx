@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 
 import emptyCartImg from "../assets/images/cesta-vazia.png";
 import { getImageUrl } from "../services/config";
-import { calculateDeliveryFees } from "../config/fees.config";
+import { FeeService } from "../services/endpoints/fee.Service";
 
 const Cart = () => {
   const { darkMode } = useContext(ThemeContext);
@@ -23,31 +23,65 @@ const Cart = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [pickup, setPickup] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [addresses, setAddresses] = useState([]);
 
-  const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-  const { serviceFee, deliveryFee } = calculateDeliveryFees(pickup);
-  const total = subtotal + serviceFee + deliveryFee;
+  // ===========================
+  // TAXAS DO BACKEND
+  // ===========================
+  const [fees, setFees] = useState({ serviceFee: 0, deliveryFee: 0 });
 
   useEffect(() => {
-    setAddresses(contextAddresses);
-    if (!selectedAddress && contextAddresses.length > 0) {
+    const loadFees = async () => {
+      try {
+        const data = await FeeService.getFees();
+        setFees(data);
+      } catch (error) {
+        console.error("Erro ao carregar taxas:", error);
+      }
+    };
+    loadFees();
+  }, []);
+
+  // ===========================
+  // ENDEREÇOS
+  // ===========================
+  useEffect(() => {
+    if (contextAddresses.length > 0 && !selectedAddress) {
       setSelectedAddress(contextAddresses[0]);
     }
   }, [contextAddresses, selectedAddress]);
 
+  // ===========================
+  // CÁLCULOS
+  // ===========================
+  const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+  const serviceFee = fees.serviceFee ?? 0;
+  const deliveryFee = pickup ? 0 : fees.deliveryFee ?? 0;
+  const total = subtotal + serviceFee + deliveryFee;
+
+  // ===========================
+  // ALTERAR QUANTIDADE
+  // ===========================
   const handleQuantityChange = (item, delta) => {
     const newQuantity = Math.max(1, item.quantity + delta);
-    updateItem(item.cartItemId, { ...item, quantity: newQuantity });
+    updateItem(item.cartItemId, { quantity: newQuantity });
   };
 
+  // ===========================
+  // CHECKOUT
+  // ===========================
   const handleGoToCheckout = () => {
-    if (authLoading) return; // ainda verificando cookie
-    if (!user) return navigate("/login"); // não logado
-    navigate("/checkout"); // navegação sem reload
+    if (authLoading) return;
+
+    if (!user) return navigate("/login");
+
+    navigate("/checkout", { state: { pickup, address: selectedAddress } });
   };
 
-  if (loading || authLoading) return <Typography>Carregando...</Typography>;
+  if (loading || authLoading) {
+    return (
+      <Typography sx={{ textAlign: "center", mt: 4 }}>Carregando...</Typography>
+    );
+  }
 
   return (
     <Box
@@ -58,6 +92,7 @@ const Cart = () => {
       }}
     >
       <Navbar />
+
       <Box
         sx={{
           maxWidth: 1200,
@@ -70,6 +105,7 @@ const Cart = () => {
           flexDirection: { xs: "column", md: "row" },
         }}
       >
+        {/* LISTA DE PRODUTOS */}
         <Box sx={{ flex: 2, display: "flex", flexDirection: "column", gap: 3 }}>
           <Typography variant="h5" sx={{ textAlign: "center" }}>
             Confira seus produtos
@@ -93,6 +129,7 @@ const Cart = () => {
               <Typography variant="h6" sx={{ opacity: 0.7 }}>
                 Seu carrinho está vazio
               </Typography>
+
               <Button
                 variant="contained"
                 color="success"
@@ -132,29 +169,29 @@ const Cart = () => {
                   />
                   <Box sx={{ minWidth: 150 }}>
                     <Typography>{item.name}</Typography>
+
                     {item.extras?.length > 0 && (
                       <Typography variant="body2">
                         Extras: {item.extras.map((e) => e.name).join(", ")}
                       </Typography>
                     )}
+
                     {item.observations && (
                       <Typography variant="body2">
                         Obs: {item.observations}
                       </Typography>
                     )}
+
                     <Typography variant="body2">
-                      Unitário: R${(item.totalPrice / item.quantity).toFixed(2)}
+                      Unitário: R$
+                      {(
+                        item.unitPrice ?? item.totalPrice / item.quantity
+                      ).toFixed(2)}
                     </Typography>
                   </Box>
                 </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mt: { xs: 1, md: 0 },
-                  }}
-                >
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Button
                     variant="outlined"
                     size="small"
@@ -165,7 +202,9 @@ const Cart = () => {
                   >
                     −
                   </Button>
+
                   <Typography>{item.quantity}</Typography>
+
                   <Button
                     variant="outlined"
                     size="small"
@@ -176,15 +215,17 @@ const Cart = () => {
                   >
                     +
                   </Button>
+
                   <IconButton
+                    sx={{ color: "red" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       removeItem(item.cartItemId);
                     }}
-                    sx={{ color: "red" }}
                   >
                     <Trash2 size={18} />
                   </IconButton>
+
                   <Typography>R$ {item.totalPrice.toFixed(2)}</Typography>
                 </Box>
               </Box>
@@ -192,6 +233,8 @@ const Cart = () => {
           )}
         </Box>
 
+        {/* RESUMO / TAXAS */}
+        {/* RESUMO / TAXAS */}
         {cart.length > 0 && (
           <Box
             sx={{
@@ -207,6 +250,7 @@ const Cart = () => {
           >
             <Typography variant="h5">Resumo da compra</Typography>
             <Divider sx={{ width: "100%" }} />
+
             <Box
               sx={{
                 display: "flex",
@@ -217,16 +261,20 @@ const Cart = () => {
               <Typography>Subtotal</Typography>
               <Typography>R$ {subtotal.toFixed(2)}</Typography>
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
-              <Typography>Taxa de serviço</Typography>
-              <Typography>R$ {serviceFee.toFixed(2)}</Typography>
-            </Box>
+
+            {serviceFee > 0 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  width: "100%",
+                }}
+              >
+                <Typography>Taxa de serviço</Typography>
+                <Typography>R$ {serviceFee.toFixed(2)}</Typography>
+              </Box>
+            )}
+
             <Box
               sx={{
                 display: "flex",
@@ -235,20 +283,27 @@ const Cart = () => {
               }}
             >
               <Typography>Taxa de entrega</Typography>
-              <Typography>R$ {pickup ? 0 : deliveryFee.toFixed(2)}</Typography>
+              <Typography>
+                {deliveryFee === 0
+                  ? "Entrega grátis"
+                  : `R$ ${deliveryFee.toFixed(2)}`}
+              </Typography>
             </Box>
+
             <Divider sx={{ width: "100%" }} />
+
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
-                fontWeight: "bold",
                 width: "100%",
+                fontWeight: "bold",
               }}
             >
               <Typography>Total</Typography>
               <Typography>R$ {total.toFixed(2)}</Typography>
             </Box>
+
             <Button
               variant="contained"
               color="success"

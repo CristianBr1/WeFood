@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useContext } from "react";
+import { memo, useState, useEffect, useContext, useMemo } from "react";
 import { getImageUrl } from "../services/config";
 import { ThemeContext } from "../context/ThemeProvider";
 import { Button, IconButton } from "@mui/material";
@@ -19,40 +19,53 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
   const [quantity, setQuantity] = useState(1);
   const [observations, setObservations] = useState("");
 
+  // Carrega estado inicial do item
   useEffect(() => {
     setSelectedExtras(
       Array.isArray(item.extras)
         ? item.extras.map((e) => ({ name: e.name, price: e.price }))
         : []
     );
+
     setMeatCount(item.meatCount || 1);
     setQuantity(item.quantity || 1);
     setObservations(item.observations || "");
   }, [item]);
 
+  // Alterna seleção de extras
   const toggleExtra = (extra) => {
     setSelectedExtras((prev) =>
       prev.some((e) => e.name === extra.name)
         ? prev.filter((e) => e.name !== extra.name)
-        : [...prev, extra]
+        : [...prev, { name: extra.name, price: extra.price }]
     );
   };
 
-  const totalPrice =
-    (item.price +
-      selectedExtras.reduce((sum, e) => sum + e.price, 0) +
-      (meatCount - 1) * (item.meatOptions?.pricePerExtra || 0)) *
-    quantity;
+  // Cálculo único e memoizado
+  const { unitPrice, totalPrice } = useMemo(() => {
+    const extrasTotal = selectedExtras.reduce((sum, e) => sum + e.price, 0);
+    const extraMeatTotal =
+      (meatCount - 1) * (item.meatOptions?.pricePerExtra || 0);
 
+    const unit = item.price + extrasTotal + extraMeatTotal;
+    return {
+      unitPrice: unit,
+      totalPrice: unit * quantity,
+    };
+  }, [selectedExtras, meatCount, quantity, item]);
+
+  // Atualiza o item no carrinho
   const handleUpdate = async () => {
     await updateItem(item.cartItemId, {
       quantity,
       extras: selectedExtras,
       meatCount,
       observations,
+      unitPrice,
+      totalPrice,
     });
 
-    if (onUpdate) onUpdate();
+    onUpdate && onUpdate();
     onClose();
   };
 
@@ -75,7 +88,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
           position: "relative",
         }}
       >
-        {/* Botão de fechar responsivo */}
+        {/* Botão de fechar */}
         <IconButton
           onClick={onClose}
           size="large"
@@ -101,9 +114,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
 
         <div className="modal-contents">
           <div className="product-image">
-            {item.image && (
-              <img src={getImageUrl(item.image)} alt={item.name} />
-            )}
+            {item.image && <img src={getImageUrl(item.image)} alt={item.name} />}
           </div>
 
           <div className="product-info">
@@ -111,6 +122,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
             <div className="modal-body">
               <p>{item.description}</p>
 
+              {/* EXTRAS */}
               {allExtras.length > 0 && (
                 <div>
                   <h4>Extras</h4>
@@ -129,9 +141,11 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
                 </div>
               )}
 
+              {/* Carnes */}
               {item.meatOptions && (
                 <div className="meat-selector">
                   <h4>Quantidade de carnes</h4>
+
                   <Button
                     variant="outlined"
                     size="small"
@@ -143,7 +157,9 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
                   >
                     -
                   </Button>
+
                   <span style={{ margin: "0 8px" }}>{meatCount}</span>
+
                   <Button
                     variant="outlined"
                     size="small"
@@ -155,6 +171,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
                   >
                     +
                   </Button>
+
                   {meatCount > 1 && (
                     <p className="extra-meat-price">
                       + R${" "}
@@ -167,6 +184,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
                 </div>
               )}
 
+              {/* Observações */}
               <h4>Observações</h4>
               <textarea
                 placeholder="Alguma observação sobre o pedido?"
@@ -177,7 +195,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
           </div>
         </div>
 
-        {/* Footer responsivo */}
+        {/* FOOTER */}
         <div className="modal-footer">
           <div className="quantity-controls">
             <Button
@@ -198,7 +216,7 @@ const CartProductModal = ({ item, onClose, onUpdate }) => {
           </div>
 
           <Button
-          className="add-cart-btn"
+            className="add-cart-btn"
             variant="contained"
             color="success"
             onClick={handleUpdate}

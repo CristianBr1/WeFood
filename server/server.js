@@ -22,6 +22,7 @@ import addressRoutes from "./routes/address.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import seedHamburgersRoute from "./routes/seedHamburgers.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import settingsRoutes from "./routes/settings.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -98,6 +99,7 @@ app.use("/api/auth", authRoutes); // Google OAuth está aqui
 app.use("/api/cart", cartRoutes);
 app.use("/api", seedHamburgersRoute);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/settings", settingsRoutes);
 
 /* ====================================
    🔍 Rota de teste

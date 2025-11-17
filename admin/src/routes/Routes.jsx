@@ -14,6 +14,7 @@ import Orders from "../pages/Orders";
 import LogoManage from "../pages/LogoManage";
 import MyAccount from "../pages/MyAccount";
 import Login from "../pages/Login";
+import AdminSettings from "../pages/AdminSettings";
 
 const Router = () => (
   <Routes>
@@ -31,6 +32,7 @@ const Router = () => (
     >
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard />} />
+      <Route path="configuracoes" element={<AdminSettings />} />
       <Route path="banners" element={<Banners />} />
       <Route path="banners/add" element={<AddBanners />} />
       <Route path="categorias" element={<Categories />} />
