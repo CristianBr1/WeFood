@@ -121,7 +121,7 @@ const Orders = () => {
                 <Typography variant="subtitle2">Entrega para:</Typography>
                 <Typography>
                   {order.delivery_address.address_line}{" "}
-                  {order.delivery_address.number} - {" "}
+                  {order.delivery_address.number} -{" "}
                   {order.delivery_address.neighborhood},{" "}
                   {order.delivery_address.city} - CEP:{" "}
                   {order.delivery_address.pincode}
@@ -145,9 +145,14 @@ const Orders = () => {
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>Taxa de entrega</Typography>
               <Typography>
-                R$ {order.pickup ? 0 : order.deliveryFee.toFixed(2)}
+                {order.pickup
+                  ? "Retirar no local"
+                  : Number(order.deliveryFee) === 0
+                  ? "Entrega grátis"
+                  : `R$ ${order.deliveryFee.toFixed(2)}`}
               </Typography>
             </Box>
+
             <Divider sx={{ my: 1 }} />
             <Box
               sx={{

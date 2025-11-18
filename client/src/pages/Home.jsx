@@ -1,26 +1,35 @@
-import { memo, useState, useEffect, useRef } from "react";
+import { memo, useState, useEffect, useRef, useContext } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import HomeSlider from "../components/HomeSlider";
 import HomeCategory from "../components/HomeCategory";
 import HomeProductModal from "../components/HomeProductModal";
-import { useProducts } from "../hooks/useProducts";
 import Footer from "../components/Footer";
+import { useProducts } from "../hooks/useProducts";
+import { ThemeContext } from "../context/ThemeProvider";
+import { Box } from "@mui/material";
 
 const Home = () => {
   const { productId } = useParams();
   const location = useLocation();
   const { getProductById } = useProducts();
+  const { darkMode } = useContext(ThemeContext);
 
   const [modalProduct, setModalProduct] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
   const modalOpenedRef = useRef(false);
 
-  // Abrir modal com produto completo
+  /** =============================
+   *   Abrir modal com produto
+   * ============================= */
   const openProductModal = async (product) => {
     try {
-      const full = product.extras && product.meatOptions ? product : await getProductById(product._id);
+      const full =
+        product.extras && product.meatOptions
+          ? product
+          : await getProductById(product._id);
+
       setModalProduct(full);
       modalOpenedRef.current = true;
       window.history.pushState(null, "", `/product/${full._id}`);
@@ -29,9 +38,13 @@ const Home = () => {
     }
   };
 
+  /** =============================
+   *   Fechar modal
+   * ============================= */
   const closeModal = () => {
     setModalProduct(null);
     modalOpenedRef.current = false;
+
     if (selectedCategoryId) {
       window.history.pushState(null, "", `/category/${selectedCategoryId}`);
     } else {
@@ -39,53 +52,70 @@ const Home = () => {
     }
   };
 
+  /** =============================
+   *   Selecionar categoria
+   * ============================= */
   const selectCategory = (categoryId) => {
     setSelectedCategoryId(categoryId);
     window.history.pushState(null, "", `/category/${categoryId}`);
   };
 
-  // Inicializa modal a partir da URL
+  /** =============================
+   *   Detectar URL para abrir modal
+   * ============================= */
   useEffect(() => {
-    const pathParts = location.pathname.split("/");
+    const parts = location.pathname.split("/");
 
-    if (pathParts[1] === "category") {
-      setSelectedCategoryId(pathParts[2]);
+    if (parts[1] === "category") {
+      setSelectedCategoryId(parts[2]);
     }
 
-    if (pathParts[1] === "product" && !modalOpenedRef.current) {
-      const id = pathParts[2];
+    if (parts[1] === "product" && !modalOpenedRef.current) {
+      const id = parts[2];
       if (id) {
         modalOpenedRef.current = true;
         getProductById(id)
-          .then((full) => { if (full) setModalProduct(full); })
+          .then((full) => full && setModalProduct(full))
           .catch((err) => console.error(err));
       }
     }
   }, [location.pathname, getProductById]);
 
   return (
-    <div className="Home">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        color: "text.primary",
+        transition: "0.2s",
+      }}
+    >
       <Navbar />
-      <div className="flex justify-center w-full my-6">
-        <div className="w-full max-w-[1200px]">
-          <HomeSlider />
-        </div>
-      </div>
 
-      <div className="w-full">
+      {/* SLIDER CENTRALIZADO */}
+      <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+        <Box sx={{ width: "100%", maxWidth: "1200px" }}>
+          <HomeSlider />
+        </Box>
+      </Box>
+
+      {/* LISTA DE CATEGORIAS + PRODUTOS */}
+      <Box sx={{ width: "100%" }}>
         <HomeCategory
           onOpenProductModal={openProductModal}
           onSelectCategory={selectCategory}
           productIdFromURL={modalProduct?._id || productId}
           selectedCategoryId={selectedCategoryId}
         />
-      </div>
+      </Box>
 
+      {/* MODAL DO PRODUTO */}
       {modalProduct && (
         <HomeProductModal product={modalProduct} onClose={closeModal} />
       )}
+
       <Footer />
-    </div>
+    </Box>
   );
 };
 

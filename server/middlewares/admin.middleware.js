@@ -1,4 +1,3 @@
-// middlewares/admin.middleware.js
 export function adminMiddleware(req, res, next) {
   try {
     // Se o middleware de autenticação não populou req.user ou req.userRole

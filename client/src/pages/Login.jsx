@@ -249,6 +249,11 @@ const Login = () => {
             </div>
 
             <GoogleLogin
+              style={{
+                textAlign: "center",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
               onSuccess={async (credentialResponse) => {
                 try {
                   const credential = credentialResponse.credential;

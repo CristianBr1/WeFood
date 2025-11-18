@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Box,
   Button,
@@ -6,6 +6,7 @@ import {
   Divider,
   Checkbox,
   Modal,
+  Paper,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useCartContext } from "../hooks/useCartContext";
@@ -14,12 +15,15 @@ import { useAuthContext } from "../hooks/useAuthContext";
 import AddressForm from "../components/AddressForm";
 import Loading from "../components/Loading";
 import { FeeService } from "../services/endpoints/fee.Service";
+import { ThemeContext } from "../context/ThemeProvider";
 
 const Checkout = () => {
   const { cart, refreshCart } = useCartContext();
   const { selectedAddress, setSelectedAddress, addresses } =
     useAddressContext();
   const { user, loading: authLoading } = useAuthContext();
+  const { darkMode } = useContext(ThemeContext);
+
   const navigate = useNavigate();
 
   const [pickup, setPickup] = useState(false);
@@ -27,9 +31,7 @@ const Checkout = () => {
   const [addressModalOpen, setAddressModalOpen] = useState(false);
   const [feeData, setFeeData] = useState(null);
 
-  /** ============================
-   *   🔹 Buscar taxas
-   * ============================ */
+  /** Buscar taxas */
   useEffect(() => {
     const loadFees = async () => {
       const data = await FeeService.calculate(pickup);
@@ -51,21 +53,16 @@ const Checkout = () => {
   if (authLoading || !user || !cart || !feeData)
     return <Loading text="Carregando..." />;
 
-  /** ============================
-   *     🔹 Cálculos
-   * ============================ */
-  const subtotal = cart.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+  /** ========= Cálculos ========= */
+  const subtotal = cart.reduce((s, i) => s + (i.totalPrice || 0), 0);
   const { serviceFee, deliveryFee, totalFees } = feeData;
   const total = subtotal + totalFees;
 
-  /** ============================
-   *     🔹 Pagamento Stripe
-   * ============================ */
+  /** ========= Stripe ========= */
   const handleGoToStripe = async () => {
     if (!cart.length) return alert("Seu carrinho está vazio");
-    if (!pickup && !selectedAddress?._id) {
+    if (!pickup && !selectedAddress?._id)
       return alert("Selecione um endereço ou marque Retirar no local");
-    }
 
     setProcessing(true);
 
@@ -89,7 +86,6 @@ const Checkout = () => {
       );
 
       const data = await res.json();
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -103,11 +99,22 @@ const Checkout = () => {
     }
   };
 
-  /** ============================ */
+  const borderColor = darkMode ? "#333" : "#ddd";
 
   return (
-    <Box sx={{ minHeight: "100vh", px: { xs: 2, md: 4 }, py: 6 }}>
-      <Typography variant="h4" sx={{ mb: 4, textAlign: "center" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        px: { xs: 2, md: 4 },
+        py: 6,
+        bgcolor: "background.default",
+        color: "text.primary",
+      }}
+    >
+      <Typography
+        variant="h4"
+        sx={{ mb: 4, textAlign: "center", fontWeight: 600 }}
+      >
         Checkout
       </Typography>
 
@@ -120,38 +127,56 @@ const Checkout = () => {
           gap: 3,
         }}
       >
-        {/* Produtos */}
-        <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2 }}>
-          <Typography variant="h6">Produtos</Typography>
+        {/* ===================== PRODUTOS ===================== */}
+        <Paper
+          sx={{ p: 2, borderRadius: 2, border: `1px solid ${borderColor}` }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Produtos
+          </Typography>
           <Divider sx={{ my: 1 }} />
+
           {cart.map((item) => (
             <Box
-              key={item._id}
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              key={item.cartItemId || item._id}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mb: 1,
+              }}
             >
               <Box>
-                <Typography>
+                <Typography fontWeight={500}>
                   {item.name} x {item.quantity}
                 </Typography>
+
                 {item.extras?.length > 0 && (
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ opacity: 0.75 }}>
                     Extras: {item.extras.map((e) => e.name).join(", ")}
                   </Typography>
                 )}
+
                 {item.observations && (
-                  <Typography variant="body2">
+                  <Typography variant="body2" sx={{ opacity: 0.75 }}>
                     Obs: {item.observations}
                   </Typography>
                 )}
               </Box>
-              <Typography>R$ {item.totalPrice?.toFixed(2)}</Typography>
+
+              <Typography fontWeight={600}>
+                R$ {item.totalPrice?.toFixed(2)}
+              </Typography>
             </Box>
           ))}
-        </Box>
+        </Paper>
 
-        {/* Endereço */}
-        <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2 }}>
-          <Typography variant="h6">Endereço de entrega</Typography>
+        {/* ===================== ENDEREÇO ===================== */}
+        <Paper
+          sx={{ p: 2, borderRadius: 2, border: `1px solid ${borderColor}` }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Endereço de entrega
+          </Typography>
           <Divider sx={{ my: 1 }} />
 
           {addresses.length > 0 ? (
@@ -160,34 +185,22 @@ const Checkout = () => {
                 key={addr._id}
                 sx={{
                   p: 1,
+                  borderRadius: 1,
+                  mb: 1,
+                  cursor: "pointer",
                   border:
                     selectedAddress?._id === addr._id
                       ? "2px solid #16a34a"
-                      : "1px solid #ddd",
-                  borderRadius: 1,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  mb: 1,
-                  cursor: "pointer",
+                      : `1px solid ${borderColor}`,
                 }}
                 onClick={() => {
                   setSelectedAddress(addr);
                   setPickup(false);
                 }}
               >
-                <Typography>
+                <Typography fontWeight={500}>
                   {addr.address_line} - {addr.city} - CEP: {addr.pincode}
                 </Typography>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setAddressModalOpen(true);
-                  }}
-                >
-                  Editar
-                </Button>
               </Box>
             ))
           ) : (
@@ -209,11 +222,24 @@ const Checkout = () => {
             />
             <Typography>Retirar no local</Typography>
           </Box>
-        </Box>
 
-        {/* Resumo */}
-        <Box sx={{ p: 2, bgcolor: "#fff", borderRadius: 2 }}>
-          <Typography variant="h6">Resumo da compra</Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ mt: 1 }}
+            onClick={() => setAddressModalOpen(true)}
+          >
+            Adicionar / Editar Endereço
+          </Button>
+        </Paper>
+
+        {/* ===================== RESUMO ===================== */}
+        <Paper
+          sx={{ p: 2, borderRadius: 2, border: `1px solid ${borderColor}` }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Resumo da compra
+          </Typography>
           <Divider sx={{ my: 1 }} />
 
           <Row label="Subtotal" value={subtotal} />
@@ -223,12 +249,13 @@ const Checkout = () => {
           <Row
             label="Taxa de entrega"
             value={deliveryFee}
-            displayValue={Number(deliveryFee) === 0 ? "Entrega grátis" : undefined}
+            displayValue={deliveryFee === 0 ? "Entrega grátis" : undefined}
           />
 
           <Divider sx={{ my: 1 }} />
+
           <Row label="Total" value={total} bold />
-        </Box>
+        </Paper>
 
         <Button
           variant="contained"
@@ -242,6 +269,7 @@ const Checkout = () => {
         </Button>
       </Box>
 
+      {/* ===================== MODAL ===================== */}
       <Modal open={addressModalOpen} onClose={() => setAddressModalOpen(false)}>
         <Box
           sx={{
@@ -250,10 +278,11 @@ const Checkout = () => {
             left: "50%",
             transform: "translate(-50%, -50%)",
             width: { xs: "90%", sm: 420 },
-            bgcolor: "#fff",
-            boxShadow: 24,
-            p: 2,
+            bgcolor: "background.paper",
             borderRadius: 2,
+            boxShadow: 24,
+            border: `1px solid ${borderColor}`,
+            p: 2,
           }}
         >
           <AddressForm onClose={() => setAddressModalOpen(false)} />
@@ -272,7 +301,7 @@ const Row = ({ label, value, bold, displayValue }) => (
     }}
   >
     <Typography>{label}</Typography>
-    <Typography>
+    <Typography fontWeight={bold ? 600 : 400}>
       {displayValue !== undefined
         ? displayValue
         : `R$ ${(Number(value) || 0).toFixed(2)}`}

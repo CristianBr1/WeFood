@@ -1,26 +1,40 @@
+// Importa o modelo de usuário do MongoDB
 import User from "../models/user.model.js";
+
+// Importa biblioteca para gerar e validar tokens JWT
 import jwt from "jsonwebtoken";
+
+// Importa biblioteca para criptografar e comparar senhas
 import bcrypt from "bcryptjs";
+
+// Importa biblioteca para fazer requisições HTTP externas (Google OAuth)
 import axios from "axios";
 
+// Chave secreta para assinar o JWT
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// Client ID da aplicação Google (usado no login OAuth)
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
+// Flag para identificar se estamos em produção
 const isProd = process.env.NODE_ENV === "production";
 
 /** =====================
  * CONFIG COOKIE
  * ===================== */
+// Configurações dos cookies usados para autenticação
 const cookieOptions = {
-  httpOnly: true,
-  secure: isProd, // 🔥 HTTPS apenas no PROD
-  sameSite: isProd ? "none" : "lax", // 🔥 none = permite cross-domain (produção)
+  httpOnly: true, // 🔒 impede que JS do front-end acesse o cookie
+  secure: isProd, // 🔥 cookie só via HTTPS em produção
+  sameSite: isProd ? "none" : "lax", // 🔥 'none' permite cross-domain em produção
 };
 
 /** =====================
- * GERAR TOKEN
+ * GERAR TOKEN JWT
  * ===================== */
 const createToken = (user) => {
+  // Cria um JWT com id, email e nome do usuário
+  // Expira em 7 dias
   return jwt.sign(
     { id: user._id, email: user.email, name: user.name },
     JWT_SECRET,
@@ -35,14 +49,20 @@ export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    // Verifica se já existe usuário com o mesmo email
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: "E-mail já existe." });
 
+    // Cria novo usuário
     const newUser = await User.create({ name, email, password });
 
+    // Gera token JWT
     const token = createToken(newUser);
+
+    // Salva o token em cookie
     res.cookie("token", token, cookieOptions);
 
+    // Retorna sucesso e dados do usuário
     res.json({
       message: "Registrado com sucesso!",
       user: newUser.toJSON(),
@@ -60,16 +80,22 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Busca usuário pelo email e inclui senha
     const user = await User.findOne({ email }).select("+password");
     if (!user)
       return res.status(400).json({ message: "Usuário não encontrado." });
 
+    // Compara senha informada com a hash no banco
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Senha incorreta." });
 
+    // Gera token JWT
     const token = createToken(user);
+
+    // Salva token em cookie
     res.cookie("token", token, cookieOptions);
 
+    // Retorna sucesso e dados do usuário
     res.json({
       message: "Login realizado!",
       user: user.toJSON(),
@@ -86,22 +112,25 @@ export const loginUser = async (req, res) => {
 export const googleOAuth = async (req, res) => {
   try {
     const { credential } = req.body;
-    console.log(req.body);
 
     if (!credential)
       return res.status(400).json({ message: "Credential não informado." });
 
+    // Verifica o token do Google
     const googleRes = await axios.get(
       `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
     );
 
     const info = googleRes.data;
 
+    // Verifica se o token é válido para nosso CLIENT_ID
     if (info.aud !== CLIENT_ID)
       return res.status(400).json({ message: "Token Google inválido." });
 
+    // Busca usuário pelo email do Google
     let user = await User.findOne({ email: info.email });
 
+    // Se não existir, cria um novo usuário
     if (!user) {
       user = await User.create({
         name: info.name,
@@ -111,9 +140,11 @@ export const googleOAuth = async (req, res) => {
       });
     }
 
+    // Gera token JWT
     const token = createToken(user);
     res.cookie("token", token, cookieOptions);
 
+    // Retorna sucesso e dados do usuário
     res.json({ message: "Google login OK", user: user.toJSON() });
   } catch (err) {
     console.error("Erro no login Google:", err);
@@ -126,6 +157,7 @@ export const googleOAuth = async (req, res) => {
  * ===================== */
 export const getUserProfile = async (req, res) => {
   try {
+    // Busca usuário pelo ID do token
     const user = await User.findById(req.user.id).select("-password");
     res.json({ user });
   } catch {
@@ -137,6 +169,7 @@ export const getUserProfile = async (req, res) => {
  * LOGOUT
  * ===================== */
 export const logoutUser = async (req, res) => {
+  // Limpa o cookie do token
   res.clearCookie("token", {
     ...cookieOptions,
     expires: new Date(0),
@@ -149,10 +182,12 @@ export const logoutUser = async (req, res) => {
  * ===================== */
 export const updateUserProfile = async (req, res) => {
   try {
+    // Extrai apenas campos que podem ser atualizados
     const updates = (({ name, mobile, email }) => ({ name, mobile, email }))(
       req.body
     );
 
+    // Atualiza usuário no banco
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,
     });
@@ -181,6 +216,7 @@ export const updateUserAvatar = async (req, res) => {
     if (!avatar)
       return res.status(400).json({ message: "Avatar é obrigatório." });
 
+    // Atualiza campo avatar do usuário
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar },
@@ -203,6 +239,7 @@ export const updateUserAvatar = async (req, res) => {
  * ===================== */
 export const getAllUsers = async (req, res) => {
   try {
+    // Busca todos os usuários, ordenando pelo mais recente
     const users = await User.find().sort({ createdAt: -1 });
     res.json({ success: true, users });
   } catch (err) {
@@ -216,6 +253,7 @@ export const getAllUsers = async (req, res) => {
  * ===================== */
 export const deleteUser = async (req, res) => {
   try {
+    // Deleta usuário pelo ID
     const user = await User.findByIdAndDelete(req.params.id);
 
     if (!user)

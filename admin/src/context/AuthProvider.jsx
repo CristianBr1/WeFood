@@ -1,4 +1,3 @@
-// AuthProvider.jsx
 import { createContext, useState, useEffect } from "react";
 import { AuthService } from "../services/endpoints/auth.Service";
 import Loading from "../components/Loading";

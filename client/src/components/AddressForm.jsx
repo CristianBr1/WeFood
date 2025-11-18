@@ -87,8 +87,6 @@ const AddressForm = ({ onClose }) => {
       pincode: cep,
       complement,
       favoriteAs,
-      // state removido — vem como default no schema
-      // reference removido — não existe no schema
     };
 
     try {

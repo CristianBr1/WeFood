@@ -1,32 +1,37 @@
 import { useState, useEffect, useContext } from "react";
-import { Box, Button, Typography, Divider, IconButton } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  Divider,
+  IconButton,
+  Paper,
+} from "@mui/material";
 import { Trash2 } from "lucide-react";
-import { ThemeContext } from "../context/ThemeProvider";
 import Navbar from "../components/Navbar";
 import CartProductModal from "../components/CartProductModal";
 import { useCartContext } from "../hooks/useCartContext";
 import { useAddressContext } from "../hooks/useAddressContext";
 import { useAuthContext } from "../context/AuthProvider";
 import { useNavigate } from "react-router-dom";
+import { ThemeContext } from "../context/ThemeProvider";
 
 import emptyCartImg from "../assets/images/cesta-vazia.png";
 import { getImageUrl } from "../services/config";
 import { FeeService } from "../services/endpoints/fee.Service";
 
 const Cart = () => {
-  const { darkMode } = useContext(ThemeContext);
   const { cart, loading, updateItem, removeItem } = useCartContext();
   const { addresses: contextAddresses } = useAddressContext();
   const { user, loading: authLoading } = useAuthContext();
+  const { darkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [pickup, setPickup] = useState(false);
+  const [pickup] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
 
-  // ===========================
   // TAXAS DO BACKEND
-  // ===========================
   const [fees, setFees] = useState({ serviceFee: 0, deliveryFee: 0 });
 
   useEffect(() => {
@@ -41,45 +46,37 @@ const Cart = () => {
     loadFees();
   }, []);
 
-  // ===========================
   // ENDEREÇOS
-  // ===========================
   useEffect(() => {
     if (contextAddresses.length > 0 && !selectedAddress) {
       setSelectedAddress(contextAddresses[0]);
     }
   }, [contextAddresses, selectedAddress]);
 
-  // ===========================
   // CÁLCULOS
-  // ===========================
   const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
   const serviceFee = fees.serviceFee ?? 0;
   const deliveryFee = pickup ? 0 : fees.deliveryFee ?? 0;
   const total = subtotal + serviceFee + deliveryFee;
 
-  // ===========================
-  // ALTERAR QUANTIDADE
-  // ===========================
+  // QUANTIDADE
   const handleQuantityChange = (item, delta) => {
     const newQuantity = Math.max(1, item.quantity + delta);
     updateItem(item.cartItemId, { quantity: newQuantity });
   };
 
-  // ===========================
   // CHECKOUT
-  // ===========================
   const handleGoToCheckout = () => {
     if (authLoading) return;
-
     if (!user) return navigate("/login");
-
     navigate("/checkout", { state: { pickup, address: selectedAddress } });
   };
 
   if (loading || authLoading) {
     return (
-      <Typography sx={{ textAlign: "center", mt: 4 }}>Carregando...</Typography>
+      <Typography sx={{ textAlign: "center", mt: 4 }} variant="h6">
+        Carregando...
+      </Typography>
     );
   }
 
@@ -87,8 +84,8 @@ const Cart = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: darkMode ? "#1a1a1a" : "#f5f5f5",
-        color: darkMode ? "#fff" : "#222",
+        bgcolor: "background.default",
+        color: "text.primary",
       }}
     >
       <Navbar />
@@ -99,15 +96,15 @@ const Cart = () => {
           mx: "auto",
           px: 3,
           py: 4,
-          gap: 4,
           mt: 10,
+          gap: 4,
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
         }}
       >
         {/* LISTA DE PRODUTOS */}
         <Box sx={{ flex: 2, display: "flex", flexDirection: "column", gap: 3 }}>
-          <Typography variant="h5" sx={{ textAlign: "center" }}>
+          <Typography variant="h5" sx={{ textAlign: "center", fontWeight: 600 }}>
             Confira seus produtos
           </Typography>
 
@@ -121,44 +118,33 @@ const Cart = () => {
                 gap: 2,
               }}
             >
-              <img
-                src={emptyCartImg}
-                alt="Carrinho vazio"
-                style={{ width: 200, opacity: 0.8 }}
-              />
-              <Typography variant="h6" sx={{ opacity: 0.7 }}>
+              <img src={emptyCartImg} alt="Carrinho vazio" style={{ width: 200, opacity: 0.8 }} />
+              <Typography variant="h6" sx={{ opacity: 0.8 }}>
                 Seu carrinho está vazio
               </Typography>
 
-              <Button
-                variant="contained"
-                color="success"
-                onClick={() => navigate("/")}
-              >
+              <Button variant="contained" color="success" onClick={() => navigate("/")}>
                 Voltar às compras
               </Button>
             </Box>
           ) : (
             cart.map((item) => (
-              <Box
+              <Paper
                 key={item.cartItemId}
                 sx={{
                   display: "flex",
                   justifyContent: "space-between",
                   p: 2,
                   borderRadius: 2,
-                  backgroundColor: darkMode ? "#222" : "#fff",
-                  alignItems: "center",
-                  flexWrap: "wrap",
+                  bgcolor: "background.paper",
                   cursor: "pointer",
+                  border: darkMode ? "1px solid #333" : "1px solid #ddd",
                 }}
                 onClick={() => setSelectedProduct(item)}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <img
-                    src={
-                      item.image ? getImageUrl(item.image) : "/placeholder.jpg"
-                    }
+                    src={item.image ? getImageUrl(item.image) : "/placeholder.jpg"}
                     alt={item.name}
                     style={{
                       width: 60,
@@ -167,8 +153,8 @@ const Cart = () => {
                       objectFit: "cover",
                     }}
                   />
-                  <Box sx={{ minWidth: 150 }}>
-                    <Typography>{item.name}</Typography>
+                  <Box>
+                    <Typography fontWeight={600}>{item.name}</Typography>
 
                     {item.extras?.length > 0 && (
                       <Typography variant="body2">
@@ -184,9 +170,7 @@ const Cart = () => {
 
                     <Typography variant="body2">
                       Unitário: R$
-                      {(
-                        item.unitPrice ?? item.totalPrice / item.quantity
-                      ).toFixed(2)}
+                      {(item.unitPrice ?? item.totalPrice / item.quantity).toFixed(2)}
                     </Typography>
                   </Box>
                 </Box>
@@ -226,80 +210,58 @@ const Cart = () => {
                     <Trash2 size={18} />
                   </IconButton>
 
-                  <Typography>R$ {item.totalPrice.toFixed(2)}</Typography>
+                  <Typography fontWeight={600}>
+                    R$ {item.totalPrice.toFixed(2)}
+                  </Typography>
                 </Box>
-              </Box>
+              </Paper>
             ))
           )}
         </Box>
 
-        {/* RESUMO / TAXAS */}
-        {/* RESUMO / TAXAS */}
+        {/* RESUMO */}
         {cart.length > 0 && (
-          <Box
+          <Paper
             sx={{
               flex: 1,
-              p: 2,
+              p: 3,
               borderRadius: 2,
-              backgroundColor: darkMode ? "#222" : "#fff",
+              bgcolor: "background.paper",
+              border: darkMode ? "1px solid #333" : "1px solid #ddd",
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              alignItems: "center",
+              height: "fit-content",
             }}
           >
-            <Typography variant="h5">Resumo da compra</Typography>
-            <Divider sx={{ width: "100%" }} />
+            <Typography variant="h5" fontWeight={600}>
+              Resumo da compra
+            </Typography>
 
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
+            <Divider />
+
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>Subtotal</Typography>
               <Typography>R$ {subtotal.toFixed(2)}</Typography>
             </Box>
 
             {serviceFee > 0 && (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography>Taxa de serviço</Typography>
                 <Typography>R$ {serviceFee.toFixed(2)}</Typography>
               </Box>
             )}
 
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Typography>Taxa de entrega</Typography>
               <Typography>
-                {deliveryFee === 0
-                  ? "Entrega grátis"
-                  : `R$ ${deliveryFee.toFixed(2)}`}
+                {deliveryFee === 0 ? "Entrega grátis" : `R$ ${deliveryFee.toFixed(2)}`}
               </Typography>
             </Box>
 
-            <Divider sx={{ width: "100%" }} />
+            <Divider />
 
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-                fontWeight: "bold",
-              }}
-            >
+            <Box sx={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}>
               <Typography>Total</Typography>
               <Typography>R$ {total.toFixed(2)}</Typography>
             </Box>
@@ -313,7 +275,7 @@ const Cart = () => {
             >
               Ir para pagamento
             </Button>
-          </Box>
+          </Paper>
         )}
       </Box>
 

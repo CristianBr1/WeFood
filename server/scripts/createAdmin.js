@@ -6,12 +6,12 @@ dotenv.config();
 
 const run = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("Conectado ao MongoDB");
 
     const email = "evanoff.1977@gmail.com";
-    const password = "admin123"; // sua senha desejada
-    const name = "Administrador";
+    const password = "415874"; // sua senha desejada
+    const name = "Cristian";
 
     // Verifica se já existe
     const exists = await User.findOne({ email });
