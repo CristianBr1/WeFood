@@ -9,9 +9,9 @@ const run = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Conectado ao MongoDB");
 
-    const email = "evanoff.1977@gmail.com";
-    const password = "415874"; // sua senha desejada
-    const name = "Cristian";
+    const email = "";
+    const password = ""; // sua senha desejada
+    const name = "";
 
     // Verifica se já existe
     const exists = await User.findOne({ email });
