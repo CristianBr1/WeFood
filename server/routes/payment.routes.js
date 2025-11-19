@@ -24,19 +24,21 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
     const { products, delivery_address, pickup } = req.body;
 
     const userId = req.user?._id;
-    if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
-    if (!products || products.length === 0) return res.status(400).json({ error: "Carrinho vazio." });
+    if (!userId)
+      return res.status(401).json({ error: "Usuário não autenticado." });
 
-    // ================== Buscar ou criar configurações do banco ==================
+    if (!products || products.length === 0)
+      return res.status(400).json({ error: "Carrinho vazio." });
+
+    // ================== Buscar configurações ==================
     let settings = await SettingsModel.findOne();
     if (!settings) {
       settings = await SettingsModel.create({
-        serviceFee: 0,       // sempre zero
-        deliveryFee: 0,      // valor padrão que quiser
+        serviceFee: 0,
+        deliveryFee: 0,
         minOrderAmount: 0,
         restaurantOpen: true,
       });
-      console.log("Configurações padrão criadas automaticamente");
     }
 
     const serviceFee = Number(settings.serviceFee || 0);
@@ -50,36 +52,61 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
       } else if (delivery_address._id) {
         addressData = await AddressModel.findById(delivery_address._id);
       } else {
-        addressData = await AddressModel.findOne({
-          userId,
-          address_line: delivery_address.address_line,
-          city: delivery_address.city,
-          pincode: delivery_address.pincode,
-        }) || await AddressModel.create({ ...delivery_address, userId });
+        addressData =
+          (await AddressModel.findOne({
+            userId,
+            address_line: delivery_address.address_line,
+            city: delivery_address.city,
+            pincode: delivery_address.pincode,
+          })) || (await AddressModel.create({ ...delivery_address, userId }));
       }
 
-      if (!addressData) return res.status(404).json({ error: "Endereço não encontrado." });
+      if (!addressData)
+        return res.status(404).json({ error: "Endereço não encontrado." });
     }
 
-    // ================== Produtos (validar & recalcular) ==================
+    // ================== PRODUTOS (Recalcular PREÇOS) ==================
     const populatedProducts = await Promise.all(
       products.map(async (item, index) => {
         const pid = item.productId || item._id;
+
         if (!pid || !mongoose.Types.ObjectId.isValid(pid))
           throw new Error(`ID de produto inválido no índice ${index}`);
 
         const product = await ProductModel.findById(pid);
         if (!product) throw new Error(`Produto não encontrado: ${pid}`);
 
-        const extrasTotal = item.extras?.reduce((sum, e) => sum + Number(e.price || 0), 0) || 0;
-        const unitPrice = (product.price || 0) + extrasTotal;
+        // 🔥 Soma extras
+        const extrasTotal =
+          item.extras?.reduce(
+            (sum, extra) => sum + Number(extra.price || 0),
+            0
+          ) || 0;
+
+        // 🔥 Soma carnes extras
+        const meatExtraPrice =
+          item.meatCount && product.meatOptions
+            ? (item.meatCount - 1) * (product.meatOptions.pricePerExtra || 0)
+            : 0;
+
+        // 🔥 Preço final da unidade (produto + extras + carnes extras)
+        const unitPrice =
+          Number(product.price || 0) + extrasTotal + meatExtraPrice;
+
+        if (unitPrice <= 0)
+          throw new Error(`Preço inválido para ${product.name}`);
+
         const totalPrice = unitPrice * item.quantity;
 
         return {
           productId: product._id,
-          product_details: { name: product.name, image: product.image || [] },
+          product_details: {
+            name: product.name,
+            image: product.image || [],
+          },
           quantity: item.quantity,
           extras: item.extras || [],
+          meatCount: item.meatCount || 1,
           observations: item.observations || "",
           unitPrice,
           totalPrice,
@@ -87,7 +114,11 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
       })
     );
 
-    const subTotalAmt = populatedProducts.reduce((sum, p) => sum + p.totalPrice, 0);
+    const subTotalAmt = populatedProducts.reduce(
+      (sum, p) => sum + p.totalPrice,
+      0
+    );
+
     const totalAmt = subTotalAmt + serviceFee + deliveryFee;
 
     // ================== Criar pedido PENDENTE ==================
@@ -110,7 +141,7 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
 
     // ================== Criar sessão Stripe ==================
     const lineItems = [
-      ...populatedProducts.map(item => ({
+      ...populatedProducts.map((item) => ({
         price_data: {
           currency: "brl",
           product_data: { name: item.product_details.name },
@@ -118,24 +149,32 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
         },
         quantity: item.quantity,
       })),
-      // taxa de serviço (sempre zero, mas mantido para exibição)
-      ...(serviceFee > 0 ? [{
-        price_data: {
-          currency: "brl",
-          product_data: { name: "Taxa de serviço" },
-          unit_amount: Math.round(serviceFee * 100),
-        },
-        quantity: 1,
-      }] : []),
-      // taxa de entrega
-      ...(deliveryFee > 0 ? [{
-        price_data: {
-          currency: "brl",
-          product_data: { name: "Taxa de entrega" },
-          unit_amount: Math.round(deliveryFee * 100),
-        },
-        quantity: 1,
-      }] : []),
+
+      ...(serviceFee > 0
+        ? [
+            {
+              price_data: {
+                currency: "brl",
+                product_data: { name: "Taxa de serviço" },
+                unit_amount: Math.round(serviceFee * 100),
+              },
+              quantity: 1,
+            },
+          ]
+        : []),
+
+      ...(deliveryFee > 0
+        ? [
+            {
+              price_data: {
+                currency: "brl",
+                product_data: { name: "Taxa de entrega" },
+                unit_amount: Math.round(deliveryFee * 100),
+              },
+              quantity: 1,
+            },
+          ]
+        : []),
     ];
 
     const session = await stripe.checkout.sessions.create({
@@ -149,10 +188,11 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
 
     console.log("Sessão Stripe criada:", session.id);
     res.status(201).json({ url: session.url });
-
   } catch (err) {
     console.error("Erro ao criar sessão de checkout:", err);
-    res.status(500).json({ error: err.message || "Erro ao criar sessão de pagamento." });
+    res
+      .status(500)
+      .json({ error: err.message || "Erro ao criar sessão de pagamento." });
   }
 });
 
