@@ -23,6 +23,7 @@ import orderRoutes from "./routes/order.routes.js";
 import seedHamburgersRoute from "./routes/seedHamburgers.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
+import stripeWebhookRoutes from "./routes/stripeWebhook.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,6 +77,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 /* ====================================
    🧩 Body Parser (Stripe)
 ==================================== */
+app.use("/api/payments/webhook", stripeWebhookRoutes);
+
 app.use((req, res, next) => {
   if (req.originalUrl === "/api/payments/webhook") {
     next(); // Stripe usa raw body
