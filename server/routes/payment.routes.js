@@ -11,26 +11,31 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Função auxiliar: gerar orderId legível
+// =====================
+// Função: Gerar ID do pedido
+// =====================
 const generateOrderId = () => {
   const now = new Date();
   const date = now.toISOString().slice(0, 10).replace(/-/g, "");
   return `ORD-${date}-${Math.floor(1000 + Math.random() * 9000)}`;
 };
 
-// ==================== CRIAR PEDIDO & STRIPE CHECKOUT ====================
+// =============================
+//     CRIAR CHECKOUT STRIPE
+// =============================
 router.post("/create-checkout-session", authMiddleware, async (req, res) => {
   try {
     const { products, delivery_address, pickup } = req.body;
 
     const userId = req.user?._id;
-    if (!userId)
-      return res.status(401).json({ error: "Usuário não autenticado." });
+    if (!userId) return res.status(401).json({ error: "Usuário não autenticado." });
 
     if (!products || products.length === 0)
       return res.status(400).json({ error: "Carrinho vazio." });
 
-    // ================== Buscar configurações ==================
+    // =================================================
+    // Buscar configurações
+    // =================================================
     let settings = await SettingsModel.findOne();
     if (!settings) {
       settings = await SettingsModel.create({
@@ -44,8 +49,11 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
     const serviceFee = Number(settings.serviceFee || 0);
     const deliveryFee = pickup ? 0 : Number(settings.deliveryFee || 0);
 
-    // ================== Endereço ==================
+    // =================================================
+    // Endereço de entrega
+    // =================================================
     let addressData = null;
+
     if (!pickup && delivery_address) {
       if (typeof delivery_address === "string") {
         addressData = await AddressModel.findById(delivery_address);
@@ -58,14 +66,17 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
             address_line: delivery_address.address_line,
             city: delivery_address.city,
             pincode: delivery_address.pincode,
-          })) || (await AddressModel.create({ ...delivery_address, userId }));
+          })) ||
+          (await AddressModel.create({ ...delivery_address, userId }));
       }
 
       if (!addressData)
         return res.status(404).json({ error: "Endereço não encontrado." });
     }
 
-    // ================== PRODUTOS (Recalcular PREÇOS) ==================
+    // =================================================
+    // Processar produtos (recalcular valores)
+    // =================================================
     const populatedProducts = await Promise.all(
       products.map(async (item, index) => {
         const pid = item.productId || item._id;
@@ -76,37 +87,31 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
         const product = await ProductModel.findById(pid);
         if (!product) throw new Error(`Produto não encontrado: ${pid}`);
 
-        // 🔥 Soma extras
+        // Extras normais
         const extrasTotal =
-          item.extras?.reduce(
-            (sum, extra) => sum + Number(extra.price || 0),
-            0
-          ) || 0;
+          item.extras?.reduce((sum, extra) => sum + Number(extra.price || 0), 0) || 0;
 
-        // 🔥 Soma carnes extras
+        // Cálculo das carnes extras
+        const baseMeat = product.baseMeatCount || 1;
+        const extraMeatCount = Math.max(0, (item.meatCount || baseMeat) - baseMeat);
+
         const meatExtraPrice =
-          item.meatCount && product.meatOptions
-            ? (item.meatCount - 1) * (product.meatOptions.pricePerExtra || 0)
-            : 0;
+          extraMeatCount * Number(product.meatOptions?.pricePerExtra || 0);
 
-        // 🔥 Preço final da unidade (produto + extras + carnes extras)
-        const unitPrice =
-          Number(product.price || 0) + extrasTotal + meatExtraPrice;
+        // Preço final por unidade
+        const unitPrice = Number(product.price || 0) + extrasTotal + meatExtraPrice;
 
         if (unitPrice <= 0)
-          throw new Error(`Preço inválido para ${product.name}`);
+          throw new Error(`Preço inválido para o produto ${product.name}`);
 
         const totalPrice = unitPrice * item.quantity;
 
         return {
           productId: product._id,
-          product_details: {
-            name: product.name,
-            image: product.image || [],
-          },
+          product_details: { name: product.name, image: product.image || [] },
           quantity: item.quantity,
           extras: item.extras || [],
-          meatCount: item.meatCount || 1,
+          meatCount: item.meatCount || baseMeat,
           observations: item.observations || "",
           unitPrice,
           totalPrice,
@@ -115,14 +120,17 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
     );
 
     const subTotalAmt = populatedProducts.reduce(
-      (sum, p) => sum + p.totalPrice,
+      (sum, item) => sum + item.totalPrice,
       0
     );
 
     const totalAmt = subTotalAmt + serviceFee + deliveryFee;
 
-    // ================== Criar pedido PENDENTE ==================
+    // =================================================
+    // Criar pedido PENDENTE
+    // =================================================
     const orderId = generateOrderId();
+
     const newOrder = await OrderModel.create({
       userId,
       orderId,
@@ -139,12 +147,18 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
       invoice_receipt: `RCPT-${uuidv4().slice(0, 8)}`,
     });
 
-    // ================== Criar sessão Stripe ==================
+    // =================================================
+    // Criar sessão Stripe
+    // =================================================
     const lineItems = [
       ...populatedProducts.map((item) => ({
         price_data: {
           currency: "brl",
-          product_data: { name: item.product_details.name },
+          product_data: {
+            name: `${item.product_details.name} (${item.meatCount} carnes${
+              item.extras.length ? " + extras" : ""
+            })`,
+          },
           unit_amount: Math.round(item.unitPrice * 100),
         },
         quantity: item.quantity,
@@ -187,12 +201,13 @@ router.post("/create-checkout-session", authMiddleware, async (req, res) => {
     });
 
     console.log("Sessão Stripe criada:", session.id);
+
     res.status(201).json({ url: session.url });
   } catch (err) {
     console.error("Erro ao criar sessão de checkout:", err);
-    res
-      .status(500)
-      .json({ error: err.message || "Erro ao criar sessão de pagamento." });
+    res.status(500).json({
+      error: err.message || "Erro ao criar sessão de pagamento.",
+    });
   }
 });
 

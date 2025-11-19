@@ -33,7 +33,7 @@ const PORT = process.env.PORT || 8000;
 const isProd = process.env.NODE_ENV === "production";
 
 /* ====================================
-   🛡️ Middleware Globais
+   🛡️ Middlewares Globais
 ==================================== */
 app.use(cookieParser());
 app.use(morgan("combined"));
@@ -46,8 +46,7 @@ app.use(
 );
 
 /* ====================================
-   🌍 CORS — ESSA CONFIG ESTÁ CERTA
-   Aceita cookies cross-site no PROD
+   🌍 CORS — Permitindo cookies cross-site
 ==================================== */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -75,17 +74,21 @@ app.use(
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 /* ====================================
-   🧩 Body Parser (Stripe)
+   🧩 Stripe Webhook (precisa de RAW body!)
+   ORDEM MUITO IMPORTANTE
 ==================================== */
+
+// 1️⃣ Raw body PARA O WEBHOOK do Stripe
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" })
+);
+
+// 2️⃣ Rota do webhook (usa o raw body acima)
 app.use("/api/payments/webhook", stripeWebhookRoutes);
 
-app.use((req, res, next) => {
-  if (req.originalUrl === "/api/payments/webhook") {
-    next(); // Stripe usa raw body
-  } else {
-    express.json()(req, res, next);
-  }
-});
+// 3️⃣ JSON normal para o resto da API
+app.use(express.json());
 
 /* ====================================
    🚏 Rotas da API
@@ -98,7 +101,7 @@ app.use("/api/test", testRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/store", storeRoutes);
-app.use("/api/auth", authRoutes); // Google OAuth está aqui
+app.use("/api/auth", authRoutes); 
 app.use("/api/cart", cartRoutes);
 app.use("/api", seedHamburgersRoute);
 app.use("/api/payments", paymentRoutes);
